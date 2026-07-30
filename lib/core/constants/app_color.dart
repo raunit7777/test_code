@@ -22,7 +22,12 @@ class AppColors {
   static const Color cardBorder = Color(0xFF2A2A38);
   static const Color whiteSheetBg = Color(0xFFFFFFFF);
   static const Color inputBgLight = Color(0xFFF7F7FA);
+// app_color.dart mein ye naye colors add kar do:
 
+  static const Color reviewCardBg = Color(0xFF161528);
+  static const Color insightBadgeBg = Color(0xFF26213B);
+  static const Color progressBarTrack = Color(0xFF28233C);
+  static const Color backButtonBg = Color(0xFF232238);
   // Text Colors
   static const Color textPrimaryLight = Color(0xFFFFFFFF);
   static const Color textSecondaryLight = Color(0xFFB3B3C3);

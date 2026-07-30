@@ -77,7 +77,7 @@ class MyProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AlarmsScreen(), // Apne route ka naam yahan likhein
+                          builder: (context) => const AlarmsScreen(),
                         ),
                       );
 

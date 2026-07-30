@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/auth/login_screen.dart';
 import 'package:infinity_love/features/splash/screens/select_language_screen.dart';
 
 import '../../../core/constants/const_text.dart';
@@ -241,6 +242,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // --- SCREEN 2: Meet Partners (Grid View) ---
   Widget _buildPage2() {
+    // Sirf aapki 4 available images ki list
+    final List<String> partnerImages = [
+      'assets/21.png',
+      'assets/22.png',
+      'assets/23.png',
+      'assets/24.png',
+    ];
+
     return Column(
       children: [
         const SizedBox(height: 8),
@@ -258,26 +267,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 mainAxisSpacing: 8,
                 childAspectRatio: 0.78,
               ),
-              itemCount: 30,
+              itemCount: 30, // Saari 30 tiles inn 4 images me repeat/cycle hongi
               itemBuilder: (context, index) {
+                final String imagePath = partnerImages[index % partnerImages.length];
+
                 return Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: AppColors.textPrimaryLight.withOpacity(0.08),
                       width: 1,
                     ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(13),
                     child: Image.asset(
-                      'assets/11.png',
+                      imagePath,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: const Color(0xFF1E1A24),
+                        color: AppColors.cardDarkBg,
                         child: const Icon(
                           Icons.person,
-                          color: Colors.white24,
+                          color: AppColors.textSecondaryDark,
                           size: 26,
                         ),
                       ),
@@ -295,10 +306,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
           decoration: BoxDecoration(
-            color: const Color(0xFF131118),
+            color: AppColors.profileCardBg,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: AppColors.textPrimaryLight.withOpacity(0.05),
             ),
           ),
           child: Row(
@@ -308,17 +319,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-                  children: [
+                  children:  [
                     CustomText.bold(
                       'Meet Your AI Partners',
-                      color: const Color(0xFFFF2A7A),
+                      color: AppColors.primaryPink,
                       fontSize: 22,
                       letterSpacing: -0.3,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     CustomText.regular(
                       'Discover unique personalities ready to connect with you. Each AI partner has its own distinct personality and expertise.',
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppColors.textSecondaryLight,
                       fontSize: 13.5,
                       height: 1.4,
                     ),
@@ -333,20 +344,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Container(
                   width: 54,
                   height: 54,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFFF2A7A),
+                    color: AppColors.primaryPink,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0x55FF2A7A),
+                        color: AppColors.primaryPink.withOpacity(0.35),
                         blurRadius: 16,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: const Icon(
                     Icons.arrow_forward,
-                    color: Colors.white,
+                    color: AppColors.whiteSheetBg,
                     size: 26,
                   ),
                 ),
@@ -386,7 +397,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ChooseLanguageScreen(),
+                    builder: (context) =>  LoginScreen(),
                   ),
                 );
               },

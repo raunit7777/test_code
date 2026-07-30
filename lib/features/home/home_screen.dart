@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
 
 import '../../core/constants/const_text.dart';
+import '../profile/model_profile_screen.dart';
 import '../streak/daily_streak_screen.dart';
 
 
@@ -140,7 +141,7 @@ class ProfilesGridScreen extends StatelessWidget {
                 ),
                 itemCount: _profiles.length,
                 itemBuilder: (context, index) {
-                  return _buildProfileCard(_profiles[index]);
+                  return _buildProfileCard(_profiles[index],context);
                 },
               ),
             )
@@ -151,106 +152,117 @@ class ProfilesGridScreen extends StatelessWidget {
   }
 
   // --- Profile Card Widget with Pink Glow Shadow ---
-  Widget _buildProfileCard(ProfileModel profile) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.0),
-        boxShadow: [
-          // Enhanced Hot Pink Glow Effect
-          BoxShadow(
-            color: pinkAccent.withValues(alpha: 0.55), // Increased Opacity for strong visibility
-            blurRadius: 20,                            // Increased Blur Radius for wider spread
-            spreadRadius: 3,                           // Increased Spread Radius for thicker border glow
-            offset: const Offset(0, 6),                // Elevated Depth
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.0),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Profile Background Image
-            Image.asset(
-              "assets/22.png",
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: Colors.grey[900],
-                child:
-                const Icon(Icons.person, size: 50, color: Colors.white30),
-              ),
-            ),
+  Widget _buildProfileCard(ProfileModel profile,context) {
+    return GestureDetector(onTap: (){
 
-            // Dark Gradient Overlay
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.9),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ModelProfileDetailScreen(), // Apni screen ka exact class name yahan do
+        ),
+      );
+
+    },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            // Enhanced Hot Pink Glow Effect
+            BoxShadow(
+              color: pinkAccent.withValues(alpha: 0.55), // Increased Opacity for strong visibility
+              blurRadius: 20,                            // Increased Blur Radius for wider spread
+              spreadRadius: 3,                           // Increased Spread Radius for thicker border glow
+              offset: const Offset(0, 6),                // Elevated Depth
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.0),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Profile Background Image
+              Image.asset(
+                "assets/22.png",
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[900],
+                  child:
+                  const Icon(Icons.person, size: 50, color: Colors.white30),
+                ),
+              ),
+
+              // Dark Gradient Overlay
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.1),
+                        Colors.black.withOpacity(0.9),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // Profile Information Section
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 14,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Name using CustomText.bold
-                  CustomText.bold(
-                    profile.name,
-                    fontSize: 20,
-                    color: Colors.white,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
+              // Profile Information Section
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Name using CustomText.bold
+                    CustomText.bold(
+                      profile.name,
+                      fontSize: 20,
+                      color: Colors.white,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
 
-                  // Age & Location Row
-                  Row(
-                    children: [
-                      // Age Icon & CustomText
-                      const Icon(Icons.cake_outlined,
-                          color: Colors.white70, size: 13),
-                      const SizedBox(width: 4),
-                      CustomText.regular(
-                        '${profile.age}',
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Location Icon & CustomText
-                      const Icon(Icons.location_on_outlined,
-                          color: Colors.white70, size: 13),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: CustomText.regular(
-                          profile.location,
+                    // Age & Location Row
+                    Row(
+                      children: [
+                        // Age Icon & CustomText
+                        const Icon(Icons.cake_outlined,
+                            color: Colors.white70, size: 13),
+                        const SizedBox(width: 4),
+                        CustomText.regular(
+                          '${profile.age}',
                           fontSize: 12,
                           color: Colors.white70,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+
+                        // Location Icon & CustomText
+                        const Icon(Icons.location_on_outlined,
+                            color: Colors.white70, size: 13),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: CustomText.regular(
+                            profile.location,
+                            fontSize: 12,
+                            color: Colors.white70,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

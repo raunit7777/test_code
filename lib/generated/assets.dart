@@ -3,7 +3,11 @@ class Assets {
   Assets._();
 
   static const String assets11 = 'assets/11.png';
+  static const String assets21 = 'assets/21.png';
+  static const String assets22 = 'assets/22.png';
   static const String assetsLogo = 'assets/logo.png';
   static const String assetsLogo2 = 'assets/logo2.png';
+  static const String fontsPoppinsMedium = 'assets/fonts/Poppins-Medium.ttf';
+  static const String fontsPoppinsMediumItalic = 'assets/fonts/Poppins-MediumItalic.ttf';
 
 }

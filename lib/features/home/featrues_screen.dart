@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:infinity_love/features/home/select_parthner_screen.dart';
 
 import '../../core/constants/app_color.dart';
+import '../create_parthner/create_parthner_intro_screen.dart';
 
 class InfiniteLoveScreen extends StatelessWidget {
   const InfiniteLoveScreen({super.key});
@@ -48,7 +50,15 @@ class InfiniteLoveScreen extends StatelessWidget {
                 description:
                 'Design your perfect companion. Customize its personality, voice, interests, and knowledge base for t...',
                 buttonText: 'Start Building Now',
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePartnerIntroScreen(),
+                    ),
+                  );
+
+                },
               ),
               const SizedBox(height: 20),
 
@@ -59,7 +69,15 @@ class InfiniteLoveScreen extends StatelessWidget {
                 description:
                 'Practice conversations, simulate real-world scenarios, or explore fantastical roles with your AI for engaging a...',
                 buttonText: 'Explore Roles',
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>  SelectPartnerScreen(),
+                    ),
+                  );
+
+                },
               ),
               const SizedBox(height: 20),
 

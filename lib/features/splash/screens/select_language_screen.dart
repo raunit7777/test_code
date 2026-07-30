@@ -29,7 +29,7 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      MaterialPageRoute(builder: (context) =>  MainNavigationScreen()),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
