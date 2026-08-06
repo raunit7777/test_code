@@ -1,127 +1,231 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/home/provider/features_provider.dart';
+import 'package:infinity_love/features/home/tab/chat_list.dart';
 
+import '../../../core/constants/app_string.dart';
 import '../tab/tab_bar.dart';
+import 'model/conversation_model.dart';
 
-class MessagesScreen extends StatefulWidget {
+class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
 
   @override
-  State<MessagesScreen> createState() => _MessagesScreenState();
+  ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
 }
 
-class _MessagesScreenState extends State<MessagesScreen> {
-  int selectedTabIndex = 1; // Default: 'Role Play'
+class _MessagesScreenState extends ConsumerState<MessagesScreen> {
+  static const Color pinkAccent = Color(0xFFE91E63);
 
+  int selectedTabIndex = 0; // Default: 'Chats'
   final List<String> tabList = ['Chats', 'Role Play', 'Created'];
 
-  final List<StoryContact> contacts = [
-    StoryContact(
-      name: 'Lavanya',
-      imageUrl: 'https://picsum.photos/200/200?random=11',
-    ),
-    StoryContact(
-      name: 'Trisha',
-      imageUrl: 'https://picsum.photos/200/200?random=12',
-    ),
-    StoryContact(
-      name: 'Mahi',
-      imageUrl: 'https://picsum.photos/200/200?random=13',
-    ),
-    StoryContact(
-      name: 'Madhavi',
-      imageUrl: 'https://picsum.photos/200/200?random=14',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(featuresProvider.notifier).fetchConversationList();
+      }
+    });
+  }
+
+  // 🔄 Refresh handler function
+  Future<void> _onRefresh() async {
+    await ref.read(featuresProvider.notifier).fetchConversationList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(featuresProvider);
+
     return Scaffold(
       backgroundColor: AppColors.bgBlack,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Title ---
-            const Padding(
-              padding: EdgeInsets.only(left: 20.0, top: 16.0, bottom: 20.0),
-              child: Text(
-                'Messages',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-
-            // --- Story / Active Avatars Horizontal List ---
-            SizedBox(
-              height: 100,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                scrollDirection: Axis.horizontal,
-                itemCount: contacts.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 18),
-                itemBuilder: (context, index) {
-                  return StoryAvatarItem(contact: contacts[index]);
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // --- Separate Custom Tab Filter Bar ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: CustomTabPillBar(
-                tabs: tabList,
-                selectedIndex: selectedTabIndex,
-                onTabSelected: (index) {
-                  setState(() {
-                    selectedTabIndex = index;
-                  });
-                },
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // --- Dynamic Body Content based on Active Tab ---
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 24.0),
-                child: IndexedStack(
-                  index: selectedTabIndex,
-                  children: const [
-                    EmptyStateTabCard(
-                      title: 'No Chats Yet',
-                      subtitle: 'Start a conversation with a companion',
-                      iconData: Icons.chat_bubble_outline,
+        // 🟢 RefreshIndicator wrapper with scrollable view support
+        child: RefreshIndicator(
+          color: pinkAccent,
+          backgroundColor: const Color(0xFF1E1E1E),
+          onRefresh: _onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  kBottomNavigationBarHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- Title ---
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20.0, top: 16.0, bottom: 16.0),
+                    child: Text(
+                      'Messages',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                    EmptyStateTabCard(
-                      title: 'No Role Play Yet',
-                      subtitle: 'Explore this section',
-                      iconData: Icons.settings,
+                  ),
+
+                  // --- 1. TOP STORY AVATARS ---
+                  SizedBox(
+                    height: 95,
+                    child: profileState.conversationList.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(color: pinkAccent),
+                      ),
+                      error: (error, stack) => const SizedBox.shrink(),
+                      data: (ConversationModel? conversationModel) {
+                        final items = conversationModel?.data?.items ?? [];
+
+                        if (items.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: items.length,
+                          separatorBuilder: (context, index) =>
+                          const SizedBox(width: 18),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return StoryAvatarItem(item: item);
+                          },
+                        );
+                      },
                     ),
-                    EmptyStateTabCard(
-                      title: 'No Created Partners',
-                      subtitle: 'Create your first custom AI partner',
-                      iconData: Icons.add,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // --- 2. TAB FILTER BAR ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: CustomTabPillBar(
+                      tabs: tabList,
+                      selectedIndex: selectedTabIndex,
+                      onTabSelected: (index) {
+                        setState(() {
+                          selectedTabIndex = index;
+                        });
+                      },
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // --- 3. FILTERED VERTICAL CHAT LIST (IndexedStack) ---
+                  Expanded(
+                    child: IndexedStack(
+                      index: selectedTabIndex,
+                      children: const [
+                        // Tab 0: Character/Normal Chats
+                        ChatListScreen(
+                          filterChatType: "CHARACTER",
+                        ),
+
+                        // Tab 1: RolePlay Chats
+                        ChatListScreen(
+                          filterChatType: "ROLEPLAY",
+                        ),
+
+                        // Tab 2: Created / Empty State
+                        ChatListScreen(
+                          filterChatType: "COMPANION",
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-// --- Independent Empty State View Component ---
+// --- Dynamic Story Avatar Widget ---
+class StoryAvatarItem extends StatelessWidget {
+  final Items item;
+  static const Color pinkAccent = Color(0xFFE91E63);
+
+  const StoryAvatarItem({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (item.chatType?.toUpperCase() == 'ROLEPLAY') {
+          context.pushNamed(
+            'chatScreen2',
+            extra: {
+              'sId': item.chatEntityId ?? item.sId,
+              'image': item.entityImage,
+            },
+          );
+        } else {
+          context.pushNamed(
+            'chatScreen',
+            extra: {
+              'sId': item.chatEntityId ?? item.sId,
+              'image': item.entityImage,
+            },
+          );
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: pinkAccent, width: 2),
+            ),
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: ClipOval(
+                child: (item.entityImage != null && item.entityImage!.isNotEmpty)
+                    ? Image.network(
+                  item.entityImage!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Image.asset("assets/22.png", fit: BoxFit.cover),
+                )
+                    : Image.asset("assets/22.png", fit: BoxFit.cover),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: 64,
+            child: Text(
+              item.entityName ?? AppStrings.defaultUnknown,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- Empty State Card Component ---
 class EmptyStateTabCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -142,6 +246,7 @@ class EmptyStateTabCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(24.0),
@@ -150,7 +255,6 @@ class EmptyStateTabCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Outer & Inner Icon Rings
           Container(
             width: 80,
             height: 80,
@@ -175,8 +279,6 @@ class EmptyStateTabCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
-
-          // Title
           Text(
             title,
             style: const TextStyle(
@@ -186,8 +288,6 @@ class EmptyStateTabCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Subtitle
           Text(
             subtitle,
             style: const TextStyle(
@@ -199,47 +299,4 @@ class EmptyStateTabCard extends StatelessWidget {
       ),
     );
   }
-}
-
-// --- Story Avatar Item Widget ---
-class StoryAvatarItem extends StatelessWidget {
-  final StoryContact contact;
-  static const Color pinkAccent = Color(0xFFE91E63);
-
-  const StoryAvatarItem({super.key, required this.contact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(2.5),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: pinkAccent, width: 2),
-          ),
-          child: CircleAvatar(
-            radius: 28,
-            backgroundImage: AssetImage("assets/22.png"),
-            backgroundColor: Colors.grey[800],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          contact.name,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class StoryContact {
-  final String name;
-  final String imageUrl;
-
-  StoryContact({required this.name, required this.imageUrl});
 }

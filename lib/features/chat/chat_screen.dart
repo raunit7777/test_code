@@ -1,32 +1,33 @@
+
+
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
-import '../../core/constants/const_text.dart';
-import 'custmization/model_custmization.dart';
-import 'custmization/model_language.dart';
-import 'custmization/theam_screen.dart';
+import 'package:infinity_love/features/chat/provider/chat_provider.dart';
+import '../../../core/constants/const_text.dart';
+import '../../core/constants/typing_loader.dart';
+import '../custmization/model_custmization.dart';
+import '../custmization/model_language.dart';
+import '../custmization/theam_screen.dart';
+import 'model/chat_init_model.dart';
 
-// Message Data Model
-class ChatMessage {
-  final String text;
-  final bool isMe;
-  final DateTime time;
+class ChatScreen extends ConsumerStatefulWidget {
+  final String? sId;
+  final String? imageUrl; // Passed network image URL
 
-  ChatMessage({
-    required this.text,
-    required this.isMe,
-    required this.time,
+  const ChatScreen({
+    super.key,
+    this.sId,
+    this.imageUrl,
   });
-}
-
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -37,14 +38,15 @@ class _ChatScreenState extends State<ChatScreen> {
   String _selectedLanguage = 'English';
   String _selectedPersonality = 'Playful & Caring';
 
-  // Chat Messages List
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text: "Hey there! It's so good to see you again. What's on your mind today? 😊",
-      isMe: false,
-      time: DateTime.now(),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      // if (widget.sId != null && widget.sId!.isNotEmpty) {
+      //   ref.read(chatNotifierProvider.notifier).fetchChatList(widget.sId!);
+      // }
+    });
+  }
 
   @override
   void dispose() {
@@ -53,23 +55,8 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: text,
-          isMe: true,
-          time: DateTime.now(),
-        ),
-      );
-      _messageController.clear();
-    });
-
-    // Auto-scroll to bottom
-    Future.delayed(const Duration(milliseconds: 100), () {
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 150), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -78,6 +65,37 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       }
     });
+  }
+
+  void _sendMessage() {
+    final isSending = ref.read(chatNotifierProvider).isSending;
+    // 🔴 Block duplicate sends if a request is already pending
+    if (isSending) return;
+
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    final chatData = ref.read(chatNotifierProvider).chatInit.value?.data;
+    final String conversationId = chatData?.conversationId ?? '';
+
+    if (widget.sId != null && widget.sId!.isNotEmpty && conversationId.isNotEmpty) {
+      ref.read(chatNotifierProvider.notifier).sendMessage(
+        characterId: widget.sId!,
+        conversationId: conversationId,
+        messageText: text,
+      );
+    } else {
+      final newMessage = Messages(
+        sId: DateTime.now().millisecondsSinceEpoch.toString(),
+        content: text,
+        role: 'user',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      ref.read(chatNotifierProvider.notifier).addMessageLocally(newMessage);
+    }
+
+    _messageController.clear();
+    _scrollToBottom();
   }
 
   void _showSettingsBottomSheet(BuildContext context) {
@@ -102,7 +120,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Drag Handle
                     Center(
                       child: Container(
                         width: 40,
@@ -114,7 +131,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -131,58 +147,51 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     const Divider(color: Colors.white12, height: 20),
 
-                    // 1. Language Option
-                _buildSettingsTile(
-                  icon: HugeIcons.strokeRoundedTranslate,
-                  title: 'Partner Language',
-                  subtitle: _selectedLanguage,
-                  onTap: () async {
-                    Navigator.pop(context); // Close bottom sheet
-
-                    final newLang = await Navigator.push<String>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SelectLanguageScreen(
-                          initialLanguage: _selectedLanguage,
-                        ),
-                      ),
-                    );
-
-                    if (newLang != null) {
-                      setState(() {
-                        _selectedLanguage = newLang; // State me nayi language set ho jayegi
-                      });
-                    }
-                  },
-                ),
+                    _buildSettingsTile(
+                      icon: HugeIcons.strokeRoundedTranslate,
+                      title: 'Partner Language',
+                      subtitle: _selectedLanguage,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final newLang = await Navigator.push<String>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SelectLanguageScreen(
+                              initialLanguage: _selectedLanguage,
+                            ),
+                          ),
+                        );
+                        if (newLang != null) {
+                          setState(() {
+                            _selectedLanguage = newLang;
+                          });
+                        }
+                      },
+                    ),
 
                     const SizedBox(height: 12),
-
-                    // 2. AI Customization
-                    // ChatScreen ke _showSettingsBottomSheet ke andar:
 
                     _buildSettingsTile(
                       icon: HugeIcons.strokeRoundedAiSetting,
                       title: 'AI Model Customization',
-                      subtitle: _selectedPersonality, // e.g. "Custom Personality" ya traits summary
+                      subtitle: _selectedPersonality,
                       onTap: () async {
-                        Navigator.pop(context); // Bottom sheet close karein
-
-                        // Customize Personality Screen kholein aur return value ka wait karein
+                        Navigator.pop(context);
                         final personalityData = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CustomizePersonalityScreen(),
+                            builder: (context) =>
+                            const CustomizePersonalityScreen(),
                           ),
                         );
-
                         if (personalityData != null) {
                           setState(() {
-                            // Aap context/state ke according personality store kar sakte hain
-                            // e.g. Agar list of traits mili hai toh subtitle update kar dein
                             if (personalityData['additionalTraits'] != null &&
-                                (personalityData['additionalTraits'] as List).isNotEmpty) {
-                              _selectedPersonality = (personalityData['additionalTraits'] as List).join(', ');
+                                (personalityData['additionalTraits'] as List)
+                                    .isNotEmpty) {
+                              _selectedPersonality =
+                                  (personalityData['additionalTraits'] as List)
+                                      .join(', ');
                             }
                           });
                         }
@@ -191,14 +200,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     const SizedBox(height: 12),
 
-                    // 3. Theme Color Option
                     _buildSettingsTile(
                       icon: HugeIcons.strokeRoundedPaintBrush01,
                       title: 'Chat Theme',
                       subtitle: 'Customize theme color',
                       onTap: () async {
                         Navigator.pop(context);
-
                         final newColor = await Navigator.push<Color>(
                           context,
                           MaterialPageRoute(
@@ -207,7 +214,6 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                         );
-
                         if (newColor != null) {
                           setState(() {
                             _currentThemeColor = newColor;
@@ -218,14 +224,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Close Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _currentThemeColor, // Applied dynamic theme color
+                          backgroundColor: _currentThemeColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -269,7 +274,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             HugeIcon(
               icon: icon,
-              color: _currentThemeColor, // Applied dynamic theme color
+              color: _currentThemeColor,
               size: 22,
             ),
             const SizedBox(width: 14),
@@ -302,66 +307,45 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _showSelectionDialog(
-      BuildContext context, {
-        required String title,
-        required List<String> options,
-        required String currentValue,
-        required Function(String) onSelect,
-      }) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF222224),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: CustomText.bold(title, fontSize: 18, color: Colors.white),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: options.map((option) {
-              final isSelected = option == currentValue;
-              return ListTile(
-                title: CustomText.medium(
-                  option,
-                  color: isSelected ? _currentThemeColor : Colors.white,
-                ),
-                trailing: isSelected
-                    ? Icon(Icons.check_circle, color: _currentThemeColor)
-                    : null,
-                onTap: () {
-                  onSelect(option);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.cardDarkBg,
+      child: const Center(
+        child: HugeIcon(
+          icon: HugeIcons.strokeRoundedUser,
+          size: 80,
+          color: AppColors.textSecondaryDark,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(chatNotifierProvider).chatInit;
+    final bool isSending = ref.watch(chatNotifierProvider).isSending;
+    final bool hasValidImage =
+        widget.imageUrl != null && widget.imageUrl!.isNotEmpty;
+
+    // Auto scroll when message list or sending status changes
+    ref.listen(chatNotifierProvider, (previous, next) {
+      _scrollToBottom();
+    });
+
     return Scaffold(
       backgroundColor: AppColors.bgBlack,
       body: Stack(
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset(
-              "assets/21.png",
+            child: hasValidImage
+                ? Image.network(
+              widget.imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: AppColors.cardDarkBg,
-                child: const Center(
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedUser,
-                    size: 80,
-                    color: AppColors.textSecondaryDark,
-                  ),
-                ),
-              ),
-            ),
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildPlaceholder(),
+            )
+                : _buildPlaceholder(),
           ),
 
           // Gradient Overlay
@@ -387,7 +371,8 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 // Top App Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 8.0),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -410,7 +395,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       const SizedBox(width: 8),
 
-                      // Profile Avatar with Dynamic Accent Border
+                      // Profile Avatar
                       Stack(
                         children: [
                           Container(
@@ -418,13 +403,23 @@ class _ChatScreenState extends State<ChatScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: _currentThemeColor, // Dynamic Theme Accent
+                                color: _currentThemeColor,
                                 width: 2,
                               ),
                             ),
-                            child: const CircleAvatar(
+                            child: CircleAvatar(
                               radius: 18,
-                              backgroundImage: AssetImage("assets/21.png"),
+                              backgroundColor: AppColors.cardDarkBg,
+                              backgroundImage: hasValidImage
+                                  ? NetworkImage(widget.imageUrl!)
+                                  : null,
+                              child: !hasValidImage
+                                  ? const Icon(
+                                Icons.person,
+                                size: 20,
+                                color: Colors.white,
+                              )
+                                  : null,
                             ),
                           ),
                           Positioned(
@@ -510,55 +505,121 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 // Messages List
                 Expanded(
-                  child: ListView.separated(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-                    itemCount: _messages.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      return Align(
-                        alignment: message.isMe
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.75,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: message.isMe
-                                ? _currentThemeColor // 🟢 FIXED: Using selected theme color here
-                                : const Color(0xFF1E1E1E).withOpacity(0.88),
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(18),
-                              topRight: const Radius.circular(18),
-                              bottomLeft: Radius.circular(message.isMe ? 18 : 4),
-                              bottomRight: Radius.circular(message.isMe ? 4 : 18),
-                            ),
-                            border: message.isMe
-                                ? null
-                                : Border.all(
-                              color: Colors.white.withOpacity(0.12),
-                              width: 0.8,
-                            ),
-                          ),
+                  child: chatState.when(
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryPink,
+                      ),
+                    ),
+                    error: (error, stack) => Center(
+                      child: CustomText.medium(
+                        'Failed to load chats: $error',
+                        color: Colors.white70,
+                      ),
+                    ),
+                    data: (chatModel) {
+                      final messages = chatModel?.data?.messages ?? [];
+
+                      if (messages.isEmpty && !isSending) {
+                        return Center(
                           child: CustomText.regular(
-                            message.text,
-                            fontSize: 14,
-                            color: AppColors.textPrimaryLight,
-                            height: 1.4,
+                            'Say hi to start conversation! 😊',
+                            color: Colors.white54,
                           ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12,
                         ),
+                        itemCount: messages.length + (isSending ? 1 : 0),
+                        separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          // Typing Loader item when waiting for API response
+                          if (isSending && index == messages.length) {
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E1E1E).withOpacity(0.88),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(18),
+                                    topRight: Radius.circular(18),
+                                    bottomRight: Radius.circular(18),
+                                    bottomLeft: Radius.circular(4),
+                                  ),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.12),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: TypingIndicator(
+                                  dotColor: _currentThemeColor, // Ya direct Colors.white70 bhi de sakte hain
+                                  dotSize: 7.0,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final msg = messages[index];
+                          final bool isMe = (msg.role == 'user' ||
+                              msg.role == 'me' ||
+                              msg.role == 'human');
+
+                          return Align(
+                            alignment: isMe
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                MediaQuery.of(context).size.width * 0.75,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? _currentThemeColor
+                                    : const Color(0xFF1E1E1E)
+                                    .withOpacity(0.88),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(18),
+                                  topRight: const Radius.circular(18),
+                                  bottomLeft: Radius.circular(isMe ? 18 : 4),
+                                  bottomRight: Radius.circular(isMe ? 4 : 18),
+                                ),
+                                border: isMe
+                                    ? null
+                                    : Border.all(
+                                  color: Colors.white.withOpacity(0.12),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: CustomText.regular(
+                                msg.content ?? '',
+                                fontSize: 14,
+                                color: AppColors.textPrimaryLight,
+                                height: 1.4,
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
                 ),
 
-                // Bottom Send Area
+                // Bottom Send Area (Blocked when isSending is True)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Container(
@@ -577,14 +638,21 @@ class _ChatScreenState extends State<ChatScreen> {
                         Expanded(
                           child: TextField(
                             controller: _messageController,
-                            style: const TextStyle(
-                              color: AppColors.textPrimaryLight,
+                            // 🟢 Disable input field while response is loading
+                            readOnly: isSending,
+                            style: TextStyle(
+                              color: isSending
+                                  ? Colors.white38
+                                  : AppColors.textPrimaryLight,
                               fontSize: 15,
                             ),
-                            onSubmitted: (_) => _sendMessage(),
-                            decoration: const InputDecoration(
-                              hintText: 'Type a message...',
-                              hintStyle: TextStyle(
+                            onSubmitted: (_) =>
+                            isSending ? null : _sendMessage(),
+                            decoration: InputDecoration(
+                              hintText: isSending
+                                  ? 'Please wait...'
+                                  : 'Type a message...',
+                              hintStyle: const TextStyle(
                                 color: AppColors.textSecondaryLight,
                                 fontSize: 14,
                               ),
@@ -592,22 +660,28 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                         ),
-                        // Send Button
                         Padding(
                           padding: const EdgeInsets.only(right: 6.0),
                           child: GestureDetector(
-                            onTap: _sendMessage,
-                            child: Container(
+                            // 🟢 Ignore tap while response is loading
+                            onTap: isSending ? null : _sendMessage,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: _currentThemeColor, // 🟢 FIXED: Using selected theme color here
+                                // 🟢 Reduced opacity when disabled
+                                color: isSending
+                                    ? _currentThemeColor.withOpacity(0.4)
+                                    : _currentThemeColor,
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: HugeIcon(
                                   icon: HugeIcons.strokeRoundedSent,
-                                  color: AppColors.textPrimaryLight,
+                                  color: isSending
+                                      ? Colors.white38
+                                      : AppColors.textPrimaryLight,
                                   size: 20,
                                 ),
                               ),

@@ -88,7 +88,7 @@ class _AppBtnState extends State<AppBtn> with SingleTickerProviderStateMixin {
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: widget.loading
-                ?CupertinoActivityIndicator()
+                ?Center(child: CupertinoActivityIndicator())
                 : Container(
               height: widget.height ?? 56,
               width: widget.width ?? screenWidth,

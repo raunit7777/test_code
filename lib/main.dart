@@ -1,75 +1,52 @@
-// import 'package:flutter/material.dart';
-//
-// import 'features/splash/screens/splash_screen.dart';
-//
-// void main() {
-//   runApp(const MyApp());
-// }
-//
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-//
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return SafeArea(top: false,
-//       child: MaterialApp(
-//         title: 'Flutter Demo',debugShowCheckedModeBanner: false,
-//         theme: ThemeData(
-//           // This is the theme of your application.
-//           //
-//           // TRY THIS: Try running your application with "flutter run". You'll see
-//           // the application has a purple toolbar. Then, without quitting the app,
-//           // try changing the seedColor in the colorScheme below to Colors.green
-//           // and then invoke "hot reload" (save your changes or press the "hot
-//           // reload" button in a Flutter-supported IDE, or press "r" if you used
-//           // the command line to start the app).
-//           //
-//           // Notice that the counter didn't reset back to zero; the application
-//           // state is not lost during the reload. To reset the state, use hot
-//           // restart instead.
-//           //
-//           // This works for code too, not just values: Most code changes can be
-//           // tested with just a hot reload.
-//
-//         ),
-//         home: SplashScreen(),
-//       ),
-//     );
-//   }
-// }
-//
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-import 'features/splash/screens/splash_screen.dart';
+import 'core/constants/hive_keys.dart';
+import 'core/di/service_locator.dart' as di;
+import 'core/env/dev_env.dart';
+import 'routes/app_routes.dart'; // ✅ Import your app_routes.dart
 
-void main() {
+void main() async {
+  // 1. Ensure Flutter bindings initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 2. Setup Dev Environment
+  DevEnv.setup();
+
+  // 3. Initialize Hive
+  await Hive.initFlutter();
+  await Hive.openBox(HiveKeys.settingsBox);
+
+  // 4. Service Locator (GetIt) Initialization
+  await di.init();
+
+  // 5. Run App with Riverpod Scope
   runApp(
-    // ProviderScope wrap kar diya hai Riverpod state management ke liye
     const ProviderScope(
       child: MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget { // ✅ Changed to ConsumerWidget
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ✅ Watch GoRouter from Riverpod Provider
+    final goRouter = ref.watch(routerProvider);
+
+    return MaterialApp.router( // ✅ Converted to MaterialApp.router
       title: 'Infinity Love',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F0F12), // AppColors.bgBlack
+        scaffoldBackgroundColor: const Color(0xFF0F0F12),
       ),
-      home: const SplashScreen(),
+      routerConfig: goRouter, // ✅ Passed GoRouter config
     );
   }
 }

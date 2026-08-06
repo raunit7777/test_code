@@ -1,44 +1,71 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-
 import 'package:get_it/get_it.dart';
 
-import '../network/api_endpoints.dart';
+import '../../features/auth/reposiotory/auth_repo.dart';
+import '../../features/chat/repo/chat_repo.dart';
+import '../../features/describe_image/repo/subcription_model.dart';
+import '../../features/home/home_repo/featuers_repo.dart';
+import '../../features/profile/profile_repo/profile_repo.dart';
+import '../network/api_clinet.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // Global Navigator Key for Notification redirection
   final navigatorKey = GlobalKey<NavigatorState>();
-  sl.registerSingleton<GlobalKey<NavigatorState>>(navigatorKey);
+  if (!sl.isRegistered<GlobalKey<NavigatorState>>()) {
+    sl.registerSingleton<GlobalKey<NavigatorState>>(navigatorKey);
+  }
 
-  // Services
-  // sl.registerLazySingleton<HiveService>(() => HiveService());
-  // sl.registerLazySingleton<SecureStorageServices>(() => SecureStorageServices());
-  // sl.registerLazySingleton<NotificationService>(() => NotificationService(navigatorKey: sl()));
+  // 1. Dio Registration
+  if (!sl.isRegistered<Dio>()) {
+    sl.registerLazySingleton<Dio>(() {
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://your-api-base-url.com/', // Put your actual API Base URL string here
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+        ),
+      );
+      return dio;
+    });
+  }
 
-  // sl.registerLazySingleton<Dio>(() => Dio(
-  //   BaseOptions(
-  //     baseUrl: ApiEndpoints,
-  //     connectTimeout: const Duration(seconds: 30),
-  //     receiveTimeout: const Duration(seconds: 30),
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Accept': 'application/json',
-  //     },
-  //   ),
-  // )..interceptors.addAll([
-  //   ApiInterceptor(),
-  //   LogInterceptor(
-  //     requestBody: true,
-  //     responseBody: true,
-  //   ),
-  // ]));
+  // 2. Api Client Registration
+  if (!sl.isRegistered<ApiClient>()) {
+    sl.registerLazySingleton<ApiClient>(() => ApiClient(sl<Dio>()));
+  }
 
-  // // Api Client
-  // sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
-  //
-  // // Repositories
-  // sl.registerLazySingleton<AuthRepository>(() => AuthRepository(sl()));
-  // sl.registerLazySingleton<HomeRepository>(() => HomeRepository(sl()));
+  // 3. Auth Repository Registration
+  if (!sl.isRegistered<AuthRepository>()) {
+    sl.registerLazySingleton<AuthRepository>(() => AuthRepository(sl<ApiClient>()));
+
+    if (!sl.isRegistered<ProfileRepository>()) {
+      sl.registerLazySingleton<ProfileRepository>(() => ProfileRepository(sl<ApiClient>()));
+    }
+
+    if (!sl.isRegistered<FeatuerRepository>()) {
+      sl.registerLazySingleton<FeatuerRepository>(() => FeatuerRepository(sl<ApiClient>()));
+    }
+    if (!sl.isRegistered<ChatRepository>()) {
+      sl.registerLazySingleton<ChatRepository>(() => ChatRepository(sl<ApiClient>()));
+    }
+
+
+    sl.registerLazySingleton<SubcriptionRepository>(
+          () => SubcriptionRepository(sl<ApiClient>()),
+    );
+
+  }
 }

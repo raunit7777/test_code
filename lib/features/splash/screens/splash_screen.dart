@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // ✅ Added GoRouter Import
 
 import '../../../core/constants/app_color.dart';
+import '../../../core/storage/loacal_storage.dart';
+import '../../../routes/routes_name.dart'; // ✅ RoutesName import
 import '../../../shared/weget/loader.dart';
-import 'on_boading_screen.dart'; // Apna next screen (Onboarding/Home) import kar lo
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -15,19 +17,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToNextScreen();
+    _checkAuthAndNavigate();
   }
 
-  void _navigateToNextScreen() {
+  void _checkAuthAndNavigate() {
     Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return; // Screen dispose check to prevent errors
+      if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const OnboardingScreen(), // Apne route ka naam yahan likhein
-        ),
-      );
+      // 🔍 Local Storage se Token / User ID check karein
+      final token = LocalStorage.getToken();
+      final userId = LocalStorage.getUserId();
+
+      final bool isLoggedIn = (token != null && token.isNotEmpty) ||
+          (userId != null && userId.isNotEmpty);
+
+      if (isLoggedIn) {
+        // ✅ User Logged In: Go to Main Bottom Navigation Screen
+        context.goNamed('mainNav');
+      } else {
+        // ❌ Not Logged In: Go to Onboarding Screen
+        context.goNamed('onboarding');
+      }
     });
   }
 
@@ -96,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> {
               OrbitingDotsLoader(
                 size: 50.0,
                 dotColor: AppColors.primaryPink,
-                circleColor: AppColors.primaryPink.withOpacity(0.3),
+                circleColor: AppColors.primaryPink.withValues(alpha: 0.3),
               ),
 
               const Spacer(flex: 2),
@@ -105,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'Hang tight! Love is loading...',
                 style: TextStyle(
-                  color: AppColors.textPrimaryLight.withOpacity(0.8),
+                  color: AppColors.textPrimaryLight.withValues(alpha: 0.8),
                   fontSize: 14,
                   fontWeight: FontWeight.w300,
                   letterSpacing: 0.2,

@@ -1,37 +1,173 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/create_parthner/repo/create_partner_repo.dart';
 import 'package:infinity_love/features/create_parthner/select_feature_screen_second.dart';
 import '../../core/constants/const_text.dart';
 
-class CreatePartnerFormScreen extends StatefulWidget {
+class CreatePartnerFormScreen extends ConsumerStatefulWidget {
   const CreatePartnerFormScreen({super.key});
 
   @override
-  State<CreatePartnerFormScreen> createState() =>
+  ConsumerState<CreatePartnerFormScreen> createState() =>
       _CreatePartnerFormScreenState();
 }
 
-class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
-  final TextEditingController _nameController = TextEditingController();
+class _CreatePartnerFormScreenState
+    extends ConsumerState<CreatePartnerFormScreen> {
+  late TextEditingController _nameController;
 
-  // Selection States
-  String _selectedRelationship = 'Girlfriend';
+  // Cloudinary Details
+  static const String _cloudName = "bky3dbdc";
+  static const String _uploadPreset = "userCompanionImage";
+
+  File? _imageFile;
+  String? _uploadedImageUrl;
+  bool _isUploading = false;
+
+  final ImagePicker _picker = ImagePicker();
+
+  String _selectedRelationship = 'girlfriend';
   double _selectedAge = 22;
 
   final List<String> _relationshipOptions = [
-    'Girlfriend',
-    'Bestie',
-    'Wife',
-    'Crush',
-    'Soulmate',
-    'Bhabhi',
-    'Step Sis',
+    'girlfriend',
+    'boyfriend',
   ];
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final existingData = ref.read(createPartnerProvider).partnerData;
+    _nameController = TextEditingController(text: existingData.name);
+
+    _selectedRelationship = existingData.relationship.isNotEmpty
+        ? existingData.relationship.toLowerCase()
+        : 'girlfriend';
+
+    _selectedAge = existingData.age.toDouble() > 0
+        ? existingData.age.toDouble()
+        : 22.0;
+
+    _uploadedImageUrl = existingData.imagePath;
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+// ☁️ Cloudinary Upload Functionality
+  Future<String?> _uploadToCloudinary(File file) async {
+    setState(() => _isUploading = true);
+
+    final url = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = _uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    try {
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(responseData);
+        return jsonResponse['secure_url'];
+      } else {
+        // 🔴 Detailed Error Print
+        debugPrint("Cloudinary Error ${response.statusCode}: $responseData");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Error uploading to Cloudinary: $e");
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  // 📸 Image Pick Functionality
+  Future<void> _pickImage() async {
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (photo != null) {
+      final selectedFile = File(photo.path);
+      setState(() {
+        _imageFile = selectedFile;
+        _uploadedImageUrl = null;
+      });
+
+      final url = await _uploadToCloudinary(selectedFile);
+      if (url != null && mounted) {
+        setState(() {
+          _uploadedImageUrl = url;
+        });
+
+        // 🟢 Provider Sync immediately after upload
+        ref.read(createPartnerProvider.notifier).updateBasicDetails(
+          imagePath: url,
+          image: url,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully!')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload image. Please try again.')),
+        );
+      }
+    }
+  }
+
+  void _onNext() {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter her name')),
+      );
+      return;
+    }
+
+    if (_isUploading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait, image is still uploading...')),
+      );
+      return;
+    }
+
+    final String finalImageUrl = _uploadedImageUrl ?? '';
+
+    // 🟢 Save image URL and all details in Riverpod Provider
+    ref.read(createPartnerProvider.notifier).updateBasicDetails(
+      name: _nameController.text.trim(),
+      relationship: _selectedRelationship.toLowerCase(),
+      age: _selectedAge.round(),
+      gender: 'female',
+      imagePath: finalImageUrl,
+      image: finalImageUrl,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PersonalityTraitsScreen(),
+      ),
+    );
   }
 
   @override
@@ -66,17 +202,7 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PersonalityTraitsScreen(),
-                ),
-              );
-
-              // Next action
-            },
+            onPressed: _onNext,
             child: CustomText.bold(
               'Next',
               fontSize: 16,
@@ -92,7 +218,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- 1. HEADER TITLE & SUBTITLE ---
               CustomText.bold(
                 'Create Your AI\nPartner',
                 fontSize: 28,
@@ -105,14 +230,12 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                 fontSize: 14,
                 color: AppColors.textSecondaryLight,
               ),
-
               const SizedBox(height: 24),
 
-              // --- 2. PROFILE AVATAR WITH CAMERA BADGE ---
+              // Profile Avatar with Dynamic Image & Loader
               Center(
                 child: Stack(
                   children: [
-                    // Main Gradient Circle Avatar with Glow Shadow
                     Container(
                       width: 170,
                       height: 170,
@@ -134,23 +257,50 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.people_alt_rounded,
-                          size: 70,
-                          color: AppColors.textPrimaryLight,
+                      child: ClipOval(
+                        child: _imageFile != null
+                            ? Image.file(
+                          _imageFile!,
+                          width: 170,
+                          height: 170,
+                          fit: BoxFit.cover,
+                        )
+                            : (_uploadedImageUrl != null &&
+                            _uploadedImageUrl!.isNotEmpty)
+                            ? Image.network(
+                          _uploadedImageUrl!,
+                          width: 170,
+                          height: 170,
+                          fit: BoxFit.cover,
+                        )
+                            : const Center(
+                          child: Icon(
+                            Icons.people_alt_rounded,
+                            size: 70,
+                            color: AppColors.textPrimaryLight,
+                          ),
                         ),
                       ),
                     ),
-
-                    // Camera Icon Button
+                    if (_isUploading)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryPink,
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       bottom: 4,
                       right: 4,
                       child: GestureDetector(
-                        onTap: () {
-                          // Upload/Select Image Action
-                        },
+                        onTap: _isUploading ? null : _pickImage,
                         child: Container(
                           width: 44,
                           height: 44,
@@ -178,7 +328,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
 
               const SizedBox(height: 32),
 
-              // --- 3. HER NAME FIELD ---
               CustomText.bold(
                 'Her Name',
                 fontSize: 16,
@@ -194,7 +343,7 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.adjust_rounded,
                       color: AppColors.textSecondaryLight,
                       size: 20,
@@ -223,7 +372,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
 
               const SizedBox(height: 28),
 
-              // --- 4. YOUR RELATIONSHIP ---
               CustomText.bold(
                 'Your Relationship',
                 fontSize: 16,
@@ -235,10 +383,11 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                 spacing: 10,
                 runSpacing: 12,
                 children: _relationshipOptions.map((relation) {
-                  final isSelected = _selectedRelationship == relation;
+                  final isSelected =
+                      _selectedRelationship.toLowerCase() == relation.toLowerCase();
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedRelationship = relation);
+                      setState(() => _selectedRelationship = relation.toLowerCase());
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -247,7 +396,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        // 🌸 Selected par Primary Pink, unselected par Dark Background
                         color: isSelected
                             ? AppColors.primaryPink
                             : const Color(0xFF18181A),
@@ -258,24 +406,15 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                               : Colors.white.withOpacity(0.12),
                           width: 1,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                          BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.35),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          )
-                        ]
-                            : null,
                       ),
                       child: isSelected
                           ? CustomText.bold(
-                        relation,
+                        _capitalize(relation),
                         fontSize: 14,
-                        color: Colors.white, // ⚪ Selected Text Pure White
+                        color: Colors.white,
                       )
                           : CustomText.regular(
-                        relation,
+                        _capitalize(relation),
                         fontSize: 14,
                         color: AppColors.textPrimaryLight.withOpacity(0.7),
                       ),
@@ -286,7 +425,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
 
               const SizedBox(height: 28),
 
-              // --- 5. HER AGE SLIDER ---
               CustomText.bold(
                 'Her Age: ${_selectedAge.round()}',
                 fontSize: 16,
@@ -321,24 +459,6 @@ class _CreatePartnerFormScreenState extends State<CreatePartnerFormScreen> {
                         onChanged: (val) {
                           setState(() => _selectedAge = val);
                         },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          CustomText.regular(
-                            '18',
-                            fontSize: 12,
-                            color: AppColors.textSecondaryLight,
-                          ),
-                          CustomText.regular(
-                            '45',
-                            fontSize: 12,
-                            color: AppColors.textSecondaryLight,
-                          ),
-                        ],
                       ),
                     ),
                   ],

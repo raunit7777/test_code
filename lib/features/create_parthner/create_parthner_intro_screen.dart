@@ -241,7 +241,7 @@ class _CreatePartnerIntroScreenState extends State<CreatePartnerIntroScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CreatePartnerFormScreen(),
+                              builder: (context) =>  CreatePartnerFormScreen(),
                             ),
                           );
 

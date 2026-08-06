@@ -1,54 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/create_parthner/repo/create_partner_repo.dart';
 import 'package:infinity_love/features/create_parthner/select_feature_screen_third.dart';
 import '../../core/constants/const_text.dart';
 
-class PersonalityTraitsScreen extends StatefulWidget {
+
+class PersonalityTraitsScreen extends ConsumerStatefulWidget {
   const PersonalityTraitsScreen({super.key});
 
   @override
-  State<PersonalityTraitsScreen> createState() =>
+  ConsumerState<PersonalityTraitsScreen> createState() =>
       _PersonalityTraitsScreenState();
 }
 
-class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
-  // --- Slider States (0.0 to 1.0) ---
+class _PersonalityTraitsScreenState
+    extends ConsumerState<PersonalityTraitsScreen> {
   double _shyNaughtyValue = 0.5;
   double _caringPlayfulValue = 0.5;
   double _matureChildishValue = 0.5;
 
-  // --- Additional Traits Multi-Select State (Max 5) ---
-  final List<String> _availableTraits = [
-    'Adventurous',
-    'Caring',
-    'Creative',
-    'Flirty',
-    'Funny',
-    'Loyal',
-    'Sarcastic',
-    'Talkative',
-    'Witty',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // 🟢 Riverpod state se existing slider values retrieve kar rahe hain
+    final existingData = ref.read(createPartnerProvider).partnerData;
+    _shyNaughtyValue = existingData.shyNaughty;
+    _caringPlayfulValue = existingData.caringPlayful;
+    _matureChildishValue = existingData.matureChildish;
+  }
 
-  final Set<String> _selectedTraits = {};
+  void _onNext() {
+    // 🟢 Save step 2 sliders data in Riverpod
+    ref.read(createPartnerProvider.notifier).updateSliders(
+      shyNaughty: _shyNaughtyValue,
+      caringPlayful: _caringPlayfulValue,
+      matureChildish: _matureChildishValue,
+    );
 
-  void _toggleTrait(String trait) {
-    setState(() {
-      if (_selectedTraits.contains(trait)) {
-        _selectedTraits.remove(trait);
-      } else {
-        if (_selectedTraits.length < 5) {
-          _selectedTraits.add(trait);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You can select up to 5 traits only!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    });
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AdditionalTraitsScreen(),
+      ),
+    );
   }
 
   @override
@@ -83,16 +78,7 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AdditionalTraitsScreen(),
-                ),
-              );
-
-              // Next Action
-            },
+            onPressed: _onNext,
             child: CustomText.bold(
               'Next',
               fontSize: 16,
@@ -108,7 +94,6 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- 1. TITLE & SUBTITLE ---
               CustomText.bold(
                 'Personality Traits',
                 fontSize: 28,
@@ -120,11 +105,8 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
                 fontSize: 14,
                 color: AppColors.textSecondaryLight,
               ),
-
               const SizedBox(height: 24),
 
-              // --- 2. PERSONALITY SLIDERS ---
-              // Slider 1: Shy vs Naughty
               _buildSliderCard(
                 leftText: '😳 Shy',
                 rightText: 'Naughty 😏',
@@ -133,7 +115,6 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Slider 2: Caring vs Playful
               _buildSliderCard(
                 leftText: '💖 Caring',
                 rightText: 'Playful 😜',
@@ -142,92 +123,12 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Slider 3: Mature vs Childish
               _buildSliderCard(
                 leftText: '👔 Mature',
                 rightText: 'Childish 🧸',
                 value: _matureChildishValue,
                 onChanged: (val) => setState(() => _matureChildishValue = val),
               ),
-
-              const SizedBox(height: 32),
-
-              // --- 3. ADDITIONAL TRAITS HEADER ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CustomText.bold(
-                    'Additional Traits',
-                    fontSize: 16,
-                    color: AppColors.textPrimaryLight,
-                  ),
-                  CustomText.regular(
-                    '${_selectedTraits.length}/5 selected',
-                    fontSize: 13,
-                    color: AppColors.textSecondaryLight,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              CustomText.regular(
-                'Select up to 5 traits that best describe her personality',
-                fontSize: 13,
-                color: AppColors.textSecondaryLight,
-              ),
-
-              const SizedBox(height: 16),
-
-              // --- 4. TRAITS CHIPS (CUSTOM ANIMATED CONTAINER) ---
-              Wrap(
-                spacing: 10,
-                runSpacing: 12,
-                children: _availableTraits.map((trait) {
-                  final isSelected = _selectedTraits.contains(trait);
-                  return GestureDetector(
-                    onTap: () => _toggleTrait(trait),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primaryPink
-                            : AppColors.cardDarkBg,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primaryPink
-                              : Colors.white.withOpacity(0.12),
-                          width: 1,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                          BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.35),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          )
-                        ]
-                            : null,
-                      ),
-                      child: isSelected
-                          ? CustomText.bold(
-                        trait,
-                        fontSize: 14,
-                        color: Colors.white,
-                      )
-                          : CustomText.medium(
-                        trait,
-                        fontSize: 14,
-                        color: AppColors.textPrimaryLight,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-
               const SizedBox(height: 24),
             ],
           ),
@@ -236,7 +137,6 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
     );
   }
 
-  // --- HELPER WIDGET FOR SLIDER CARDS ---
   Widget _buildSliderCard({
     required String leftText,
     required String rightText,
@@ -248,44 +148,28 @@ class _PersonalityTraitsScreenState extends State<PersonalityTraitsScreen> {
       decoration: BoxDecoration(
         color: AppColors.cardDarkBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CustomText.medium(
-                leftText,
-                fontSize: 14,
-                color: AppColors.textPrimaryLight,
-              ),
-              CustomText.medium(
-                rightText,
-                fontSize: 14,
-                color: AppColors.textPrimaryLight,
-              ),
+              CustomText.medium(leftText, fontSize: 14, color: AppColors.textPrimaryLight),
+              CustomText.medium(rightText, fontSize: 14, color: AppColors.textPrimaryLight),
             ],
           ),
           const SizedBox(height: 6),
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 5,
-              activeTrackColor: AppColors.primaryPink, // Active progress Pink
+              activeTrackColor: AppColors.primaryPink,
               inactiveTrackColor: Colors.white12,
               thumbColor: Colors.white,
               overlayColor: AppColors.primaryPink.withOpacity(0.2),
-              thumbShape: const RoundSliderThumbShape(
-                enabledThumbRadius: 10,
-                elevation: 3,
-              ),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10, elevation: 3),
             ),
-            child: Slider(
-              value: value,
-              onChanged: onChanged,
-            ),
+            child: Slider(value: value, onChanged: onChanged),
           ),
         ],
       ),

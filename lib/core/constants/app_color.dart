@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 
 class AppColors {
-  AppColors._(); // Private constructor to prevent instantiation
+  AppColors._();
 
   // Primary & Accent Pink/Magenta Shades
   static const Color primaryPink = Color(0xFFFF2B6D);

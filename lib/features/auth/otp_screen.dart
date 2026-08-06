@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // ✅ Added GoRouter Import
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/auth/provider/auth_provider.dart'; // ✅ Added AuthProvider
 import 'package:infinity_love/features/auth/provider/otp_provider.dart';
 
 import '../../core/constants/app_btn.dart';
@@ -10,11 +12,6 @@ import '../../core/constants/const_text.dart';
 import '../../core/constants/custom_text_feild.dart';
 import '../../core/utils/utils.dart';
 import '../../extensions/context_extension.dart';
-import '../bottom_nav.dart';
-
-
-
-
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -77,18 +74,17 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
   }
 
+  // ✅ Fixed OTP Verification Function (Hits API + Handles GoRouter Navigation)
   void _verifyOtp() {
     final otp = _getOtp();
     if (otp.length == AppStrings.otpLength) {
-      Navigator.pushAndRemoveUntil(
+      // API call triggers navigation on success
+      ref.read(authProvider.notifier).verifyOtpApi(
+        widget.phoneNumber,
+        otp,
         context,
-        MaterialPageRoute(
-          builder: (context) =>  MainNavigationScreen(),
-        ),
-            (route) => false,
       );
     } else {
-      // 👈 AppStrings used for error message
       Utils.showErrorMessage(
         context,
         AppStrings.enterCompleteOtp,
@@ -96,11 +92,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
   }
 
+  // ✅ Added Resend OTP Function
+  void _resendOtp() {
+    ref.read(otpProvider.notifier).startTimer();
+    ref.read(authProvider.notifier).otpSentApi(
+      widget.phoneNumber,
+      context,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final otpState = ref.watch(otpProvider);
+    final authState = ref.watch(authProvider); // ✅ Watch Auth Loading State
 
-    // Responsive Dimensions via Context Extensions
     final screenH = context.screenHeight;
     final screenW = context.screenWidth;
 
@@ -119,7 +124,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             color: AppColors.textPrimaryLight,
             size: screenW * 0.05,
           ),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => context.pop(), // ✅ GoRouter Pop
         ),
       ),
       body: SafeArea(
@@ -131,128 +136,133 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenH * 0.025),
-
-              // Title Header
-              CustomText.bold(
-                AppStrings.verifyOtpTitle, // 👈 AppStrings
-                color: AppColors.textPrimaryLight,
-                fontSize: screenW * 0.07,
-              ),
-
-              SizedBox(height: screenH * 0.012),
-
-              // Subtitle with Phone Number
-              RichText(
-                text: TextSpan(
-                  text: AppStrings.codeSentTo, // 👈 AppStrings
-                  style: TextStyle(
-                    color: AppColors.textSecondaryLight,
-                    fontSize: screenW * 0.038,
-                    height: 1.4,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: widget.phoneNumber,
-                      style: TextStyle(
-                        color: AppColors.textPrimaryLight,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              // 1. Title Header
+              Padding(
+                padding: EdgeInsets.only(top: screenH * 0.025),
+                child: CustomText.bold(
+                  AppStrings.verifyOtpTitle,
+                  color: AppColors.textPrimaryLight,
+                  fontSize: screenW * 0.07,
                 ),
               ),
 
-              SizedBox(height: screenH * 0.05),
-
-              // 6-Digit TextField Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  AppStrings.otpLength,
-                      (index) => ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _controllers[index],
-                    builder: (context, value, child) {
-                      final bool isFilled = value.text.isNotEmpty;
-
-                      return CustomTextField(
-                        width: fieldWidth,
-                        height: fieldHeight,
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        contentPadding: EdgeInsets.zero,
-                        fieldRadius: BorderRadius.circular(screenW * 0.035),
-                        fillColor: AppColors.cardDarkBg,
-                        cursorColor: AppColors.primaryPink,
-                        borderSide: BorderSide(
-                          color: isFilled
-                              ? AppColors.primaryPink
-                              : AppColors.cardBorder,
-                          width: isFilled ? 1.5 : 1.0,
-                        ),
-                        style: TextStyle(
+              // 2. Subtitle with Phone Number
+              Padding(
+                padding: EdgeInsets.only(
+                  top: screenH * 0.012,
+                  bottom: screenH * 0.05,
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    text: AppStrings.codeSentTo,
+                    style: TextStyle(
+                      color: AppColors.textSecondaryLight,
+                      fontSize: screenW * 0.038,
+                      height: 1.4,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: " ${widget.phoneNumber}",
+                        style: const TextStyle(
                           color: AppColors.textPrimaryLight,
-                          fontSize: screenW * 0.055,
                           fontWeight: FontWeight.bold,
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(1),
-                        ],
-                        onChanged: (val) => _onOtpChanged(val, index),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
               ),
 
-              SizedBox(height: screenH * 0.045),
+              // 3. 6-Digit Row
+              Padding(
+                padding: EdgeInsets.only(bottom: screenH * 0.045),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    AppStrings.otpLength,
+                        (index) => ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _controllers[index],
+                      builder: (context, value, child) {
+                        final bool isFilled = value.text.isNotEmpty;
 
-              // Verify Code Button
-              AppBtn(
-                title: AppStrings.verifyCodeBtn, // 👈 AppStrings
-                color: AppColors.primaryPink,
-                borderRadius: screenW * 0.04,
-                height: screenH * 0.068,
-                loading: otpState.isVerifying,
-                onTap: _verifyOtp,
-              ),
-
-              SizedBox(height: screenH * 0.038),
-
-              // Resend Timer Section
-              Center(
-                child: otpState.canResend
-                    ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CustomText.regular(
-                      AppStrings.didntReceiveCode, // 👈 AppStrings
-                      color: AppColors.textSecondaryLight,
-                      fontSize: screenW * 0.035,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        ref.read(otpProvider.notifier).startTimer();
+                        return CustomTextField(
+                          width: fieldWidth,
+                          height: fieldHeight,
+                          controller: _controllers[index],
+                          focusNode: _focusNodes[index],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          contentPadding: EdgeInsets.zero,
+                          fieldRadius: BorderRadius.circular(screenW * 0.035),
+                          fillColor: AppColors.cardDarkBg,
+                          cursorColor: AppColors.primaryPink,
+                          borderSide: BorderSide(
+                            color: isFilled
+                                ? AppColors.primaryPink
+                                : AppColors.cardBorder,
+                            width: isFilled ? 1.5 : 1.0,
+                          ),
+                          style: TextStyle(
+                            color: AppColors.textPrimaryLight,
+                            fontSize: screenW * 0.055,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(1),
+                          ],
+                          onChanged: (val) => _onOtpChanged(val, index),
+                        );
                       },
-                      child: CustomText.bold(
-                        AppStrings.resendCode, // 👈 AppStrings
-                        color: AppColors.primaryPink,
-                        fontSize: screenW * 0.035,
-                      ),
                     ),
-                  ],
-                )
-                    : CustomText.medium(
-                  '${AppStrings.resendCodeIn}${otpState.timerSeconds.toString().padLeft(2, '0')}', // 👈 AppStrings
-                  color: AppColors.textSecondaryDark,
-                  fontSize: screenW * 0.035,
+                  ),
                 ),
               ),
 
-              SizedBox(height: screenH * 0.025),
+              // 4. Verify Code Button (Shows loader during API call)
+              Padding(
+                padding: EdgeInsets.only(bottom: screenH * 0.038),
+                child: AppBtn(
+                  title: AppStrings.verifyCodeBtn,
+                  color: AppColors.primaryPink,
+                  borderRadius: screenW * 0.04,
+                  height: screenH * 0.068,
+                  loading: authState.loading || otpState.isVerifying, // ✅ Show loader on API hit
+                  onTap: _verifyOtp,
+                ),
+              ),
+
+              // 5. Resend Timer Section
+              Padding(
+                padding: EdgeInsets.only(bottom: screenH * 0.025),
+                child: Center(
+                  child: otpState.canResend
+                      ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText.regular(
+                        AppStrings.didntReceiveCode,
+                        color: AppColors.textSecondaryLight,
+                        fontSize: screenW * 0.035,
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: _resendOtp, // ✅ Resends OTP & resets timer
+                        child: CustomText.bold(
+                          AppStrings.resendCode,
+                          color: AppColors.primaryPink,
+                          fontSize: screenW * 0.035,
+                        ),
+                      ),
+                    ],
+                  )
+                      : CustomText.medium(
+                    '${AppStrings.resendCodeIn}${otpState.timerSeconds.toString().padLeft(2, '0')}s',
+                    color: AppColors.textSecondaryDark,
+                    fontSize: screenW * 0.035,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

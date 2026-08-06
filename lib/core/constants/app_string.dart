@@ -26,4 +26,15 @@ class AppStrings {
   static const String enterCompleteOtp = "Please enter complete 6-digit OTP";
   static const int phoneLength = 10;
   static const int otpLength = 6;
+
+  // Profiles Grid Screen Strings (✅ Added)
+  static const String headerInfinite = "Infinite ";
+  static const String headerLove = "Love";
+  static const String defaultStreakCount = "0";
+  static const String flameEmoji = "🔥";
+  static const String failedToLoadProfiles = "Failed to load profiles";
+  static const String retry = "Retry";
+  static const String noProfilesAvailable = "No profiles available";
+  static const String defaultUnknown = "Unknown";
+  static const String defaultNotAvailable = "N/A";
 }

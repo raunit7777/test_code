@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
+import 'package:infinity_love/features/create_parthner/repo/create_partner_repo.dart';
 import 'package:infinity_love/features/create_parthner/review_ai_model.dart';
 import '../../core/constants/const_text.dart';
 
-class AdditionalTraitsScreen extends StatefulWidget {
+
+class AdditionalTraitsScreen extends ConsumerStatefulWidget {
   const AdditionalTraitsScreen({super.key});
 
   @override
-  State<AdditionalTraitsScreen> createState() => _AdditionalTraitsScreenState();
+  ConsumerState<AdditionalTraitsScreen> createState() =>
+      _AdditionalTraitsScreenState();
 }
 
-class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
-  // Screenshot me dikhne wale saare exact traits:
+class _AdditionalTraitsScreenState
+    extends ConsumerState<AdditionalTraitsScreen> {
   final List<String> _availableTraits = [
     'Adventurous',
     'Caring',
@@ -35,6 +39,16 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
 
   final Set<String> _selectedTraits = {};
 
+  @override
+  void initState() {
+    super.initState();
+    // 🟢 Riverpod state se pehle se selected traits restore kar rahe hain
+    final existingTraits = ref.read(createPartnerProvider).partnerData.traits;
+    if (existingTraits.isNotEmpty) {
+      _selectedTraits.addAll(existingTraits);
+    }
+  }
+
   void _toggleTrait(String trait) {
     setState(() {
       if (_selectedTraits.contains(trait)) {
@@ -52,6 +66,27 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
         }
       }
     });
+  }
+
+  void _onNext() {
+    if (_selectedTraits.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select at least 1 trait')),
+      );
+      return;
+    }
+
+    // 🟢 Save step 3 traits data in Riverpod Provider
+    ref
+        .read(createPartnerProvider.notifier)
+        .updateTraits(_selectedTraits.toList());
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ReviewScreen(),
+      ),
+    );
   }
 
   @override
@@ -86,17 +121,7 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>  ReviewScreen(),
-                ),
-              );
-
-              // Next Action / Save selected traits logic
-            },
+            onPressed: _onNext,
             child: CustomText.bold(
               'Next',
               fontSize: 16,
@@ -112,7 +137,6 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- HEADER & COUNTER ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -128,17 +152,7 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              CustomText.regular(
-                'Select up to 5 traits that best describe her personality',
-                fontSize: 14,
-                color: AppColors.textSecondaryLight,
-                height: 1.4,
-              ),
-
               const SizedBox(height: 28),
-
-              // --- TRAITS GRID / WRAP ---
               Wrap(
                 spacing: 12,
                 runSpacing: 14,
@@ -155,7 +169,7 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primaryPink
-                            : Colors.transparent, // Unselected image jaisa minimal & clean
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: isSelected
@@ -163,33 +177,17 @@ class _AdditionalTraitsScreenState extends State<AdditionalTraitsScreen> {
                               : Colors.white.withOpacity(0.12),
                           width: 1,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                          BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.35),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          )
-                        ]
-                            : null,
                       ),
                       child: isSelected
-                          ? CustomText.bold(
-                        trait,
-                        fontSize: 14,
-                        color: Colors.white,
-                      )
-                          : CustomText.regular(
-                        trait,
-                        fontSize: 14,
-                        color: AppColors.textPrimaryLight,
-                      ),
+                          ? CustomText.bold(trait,
+                          fontSize: 14, color: Colors.white)
+                          : CustomText.regular(trait,
+                          fontSize: 14,
+                          color: AppColors.textPrimaryLight),
                     ),
                   );
                 }).toList(),
               ),
-
-              const SizedBox(height: 24),
             ],
           ),
         ),
