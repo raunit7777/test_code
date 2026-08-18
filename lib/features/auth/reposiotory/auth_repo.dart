@@ -78,11 +78,12 @@ class AuthRepository {
 
   AuthRepository(this._apiClient);
 
-  Future<dynamic> sendOtp(String mobile) async {
+  Future<dynamic> sendOtp(String mobile ,) async {
     final response = await _apiClient.post(
       ApiEndpoints.sendOtp,
       data: {
         'mobileNumber': mobile, // ✅ Pass in request body/data
+         // ✅ Pass in request body/data
       },
     );
     return response.data;

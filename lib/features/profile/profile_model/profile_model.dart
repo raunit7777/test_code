@@ -1,119 +1,114 @@
-// -----------------------------------------------------------------------------
-// Pure Manual ProfileModel2 (No .g.dart or Generator Required)
-// -----------------------------------------------------------------------------
-
 class ProfileModel2 {
-  final bool? success;
-  final Data? data;
-  final String? message;
+  bool? success;
+  Data? data;
+  String? message;
 
-  ProfileModel2({
-    this.success,
-    this.data,
-    this.message,
-  });
+  ProfileModel2({this.success, this.data, this.message});
 
-  factory ProfileModel2.fromJson(Map<String, dynamic> json) {
-    return ProfileModel2(
-      success: json['success'] as bool?,
-      data: json['data'] != null
-          ? Data.fromJson(json['data'] as Map<String, dynamic>)
-          : null,
-      message: json['message'] as String?,
-    );
+  ProfileModel2.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    message = json['message'];
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      'data': data?.toJson(),
-      'message': message,
-    };
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['success'] = this.success;
+    if (this.data != null) {
+      data['data'] = this.data!.toJson();
+    }
+    data['message'] = this.message;
+    return data;
   }
 }
 
 class Data {
-  final Preferences? preferences;
-  final String? sId;
-  final String? mobileNumber;
-  final String? name;
-  final String? role;
-  final bool? isAnonymous;
-  final String? lastActiveAt;
-  final String? createdAt;
-  final String? updatedAt;
-  final int? iV;
+  Preferences? preferences;
+  String? sId;
+  String? mobileNumber;
+  String? name;
+  String? role;
+  bool? isAnonymous;
+  bool? isSubscribed;
+  String? subscriptionType;
+  String? lastActiveAt;
+  String? createdAt;
+  String? updatedAt;
+  int? iV;
+  String? avatar;
 
-  Data({
-    this.preferences,
-    this.sId,
-    this.mobileNumber,
-    this.name,
-    this.role,
-    this.isAnonymous,
-    this.lastActiveAt,
-    this.createdAt,
-    this.updatedAt,
-    this.iV,
-  });
+  Data(
+      {this.preferences,
+        this.sId,
+        this.mobileNumber,
+        this.name,
+        this.role,
+        this.isAnonymous,
+        this.isSubscribed,
+        this.subscriptionType,
+        this.lastActiveAt,
+        this.createdAt,
+        this.updatedAt,
+        this.iV,
+        this.avatar});
 
-  factory Data.fromJson(Map<String, dynamic> json) {
-    return Data(
-      preferences: json['preferences'] != null
-          ? Preferences.fromJson(json['preferences'] as Map<String, dynamic>)
-          : null,
-      sId: json['_id'] as String?,
-      mobileNumber: json['mobileNumber'] as String?,
-      name: json['name'] as String?,
-      role: json['role'] as String?,
-      isAnonymous: json['isAnonymous'] as bool?,
-      lastActiveAt: json['lastActiveAt'] as String?,
-      createdAt: json['createdAt'] as String?,
-      updatedAt: json['updatedAt'] as String?,
-      iV: (json['__v'] as num?)?.toInt(),
-    );
+  Data.fromJson(Map<String, dynamic> json) {
+    preferences = json['preferences'] != null
+        ? new Preferences.fromJson(json['preferences'])
+        : null;
+    sId = json['_id'];
+    mobileNumber = json['mobileNumber'];
+    name = json['name'];
+    role = json['role'];
+    isAnonymous = json['isAnonymous'];
+    isSubscribed = json['isSubscribed'];
+    subscriptionType = json['subscriptionType'];
+    lastActiveAt = json['lastActiveAt'];
+    createdAt = json['createdAt'];
+    updatedAt = json['updatedAt'];
+    iV = json['__v'];
+    avatar = json['avatar'];
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'preferences': preferences?.toJson(),
-      '_id': sId,
-      'mobileNumber': mobileNumber,
-      'name': name,
-      'role': role,
-      'isAnonymous': isAnonymous,
-      'lastActiveAt': lastActiveAt,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      '__v': iV,
-    };
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (this.preferences != null) {
+      data['preferences'] = this.preferences!.toJson();
+    }
+    data['_id'] = this.sId;
+    data['mobileNumber'] = this.mobileNumber;
+    data['name'] = this.name;
+    data['role'] = this.role;
+    data['isAnonymous'] = this.isAnonymous;
+    data['isSubscribed'] = this.isSubscribed;
+    data['subscriptionType'] = this.subscriptionType;
+    data['lastActiveAt'] = this.lastActiveAt;
+    data['createdAt'] = this.createdAt;
+    data['updatedAt'] = this.updatedAt;
+    data['__v'] = this.iV;
+    data['avatar'] = this.avatar;
+    return data;
   }
 }
 
 class Preferences {
-  final String? language;
-  final bool? notifications;
-  final int? maxDailyNotifications;
+  String? language;
+  bool? notifications;
+  int? maxDailyNotifications;
 
-  Preferences({
-    this.language,
-    this.notifications,
-    this.maxDailyNotifications,
-  });
+  Preferences({this.language, this.notifications, this.maxDailyNotifications});
 
-  factory Preferences.fromJson(Map<String, dynamic> json) {
-    return Preferences(
-      language: json['language'] as String?,
-      notifications: json['notifications'] as bool?,
-      maxDailyNotifications: (json['maxDailyNotifications'] as num?)?.toInt(),
-    );
+  Preferences.fromJson(Map<String, dynamic> json) {
+    language = json['language'];
+    notifications = json['notifications'];
+    maxDailyNotifications = json['maxDailyNotifications'];
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'language': language,
-      'notifications': notifications,
-      'maxDailyNotifications': maxDailyNotifications,
-    };
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['language'] = this.language;
+    data['notifications'] = this.notifications;
+    data['maxDailyNotifications'] = this.maxDailyNotifications;
+    return data;
   }
 }

@@ -13,4 +13,5 @@ class RoutesName {
   static const String chatScreen2 = '/chatScreen2';
   static const String chatScreen3 = '/chatScreen3';
   static const String subriptionScreen = '/subriptionScreen';
+  static const String customizePersonalityScreen = '/customizePersonalityScreen';
 }

@@ -155,13 +155,13 @@ class _PartnerCard extends ConsumerWidget {
               .fetchChatListRole(sId, imageUrl: imageUrl);
 
           // 🟢 2. Direct Navigation
-          context.pushNamed(
-            'chatScreen2',
-            extra: {
-              'sId': sId,
-              'image': imageUrl,
-            },
-          );
+          // context.pushNamed(
+          //   'chatScreen2',
+          //   extra: {
+          //     'sId': sId,
+          //     'image': imageUrl,
+          //   },
+          // );
         }
       },
       child: Container(

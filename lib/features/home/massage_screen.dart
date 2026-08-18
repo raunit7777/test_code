@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' hide Characters;
+import 'package:flutter/material.dart' hide Characters;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
@@ -7,7 +8,7 @@ import 'package:infinity_love/features/home/tab/chat_list.dart';
 
 import '../../../core/constants/app_string.dart';
 import '../tab/tab_bar.dart';
-import 'model/conversation_model.dart';
+import 'model/featurs_model.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -27,6 +28,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     super.initState();
     Future.microtask(() {
       if (mounted) {
+        // 🟢 Fetch Profiles (for top story circles) + Conversation List (for bottom chats)
+        ref.read(featuresProvider.notifier).fetchProfile();
         ref.read(featuresProvider.notifier).fetchConversationList();
       }
     });
@@ -34,7 +37,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
 
   // 🔄 Refresh handler function
   Future<void> _onRefresh() async {
-    await ref.read(featuresProvider.notifier).fetchConversationList();
+    await Future.wait([
+      ref.read(featuresProvider.notifier).fetchProfile(),
+      ref.read(featuresProvider.notifier).fetchConversationList(),
+    ]);
   }
 
   @override
@@ -72,30 +78,30 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                     ),
                   ),
 
-                  // --- 1. TOP STORY AVATARS ---
+                  // --- 1. TOP STORY AVATARS (Fetched via fetchProfile API) ---
                   SizedBox(
                     height: 95,
-                    child: profileState.conversationList.when(
+                    child: profileState.profileList.when(
                       loading: () => const Center(
-                        child: CircularProgressIndicator(color: pinkAccent),
+                        child: CupertinoActivityIndicator(color: pinkAccent),
                       ),
                       error: (error, stack) => const SizedBox.shrink(),
-                      data: (ConversationModel? conversationModel) {
-                        final items = conversationModel?.data?.items ?? [];
+                      data: (FeatureModel? featureModel) {
+                        final characters = featureModel?.data?.characters ?? [];
 
-                        if (items.isEmpty) {
+                        if (characters.isEmpty) {
                           return const SizedBox.shrink();
                         }
 
                         return ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           scrollDirection: Axis.horizontal,
-                          itemCount: items.length,
+                          itemCount: characters.length,
                           separatorBuilder: (context, index) =>
                           const SizedBox(width: 18),
                           itemBuilder: (context, index) {
-                            final item = items[index];
-                            return StoryAvatarItem(item: item);
+                            final character = characters[index];
+                            return StoryAvatarItem(character: character);
                           },
                         );
                       },
@@ -135,7 +141,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                           filterChatType: "ROLEPLAY",
                         ),
 
-                        // Tab 2: Created / Empty State
+                        // Tab 2: Created / Companion Chats
                         ChatListScreen(
                           filterChatType: "COMPANION",
                         ),
@@ -152,34 +158,36 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   }
 }
 
-// --- Dynamic Story Avatar Widget ---
-class StoryAvatarItem extends StatelessWidget {
-  final Items item;
+// --- Dynamic Story Avatar Widget (Connected to Profiles API) ---
+class StoryAvatarItem extends StatefulWidget {
+  final Characters character;
   static const Color pinkAccent = Color(0xFFE91E63);
 
-  const StoryAvatarItem({super.key, required this.item});
+  const StoryAvatarItem({super.key, required this.character});
+
+  @override
+  State<StoryAvatarItem> createState() => _StoryAvatarItemState();
+}
+
+class _StoryAvatarItemState extends State<StoryAvatarItem> {
+  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
+    final String name = widget.character.name ?? AppStrings.defaultUnknown;
+    final String? imageUrl = widget.character.image;
+    final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
     return GestureDetector(
       onTap: () {
-        if (item.chatType?.toUpperCase() == 'ROLEPLAY') {
-          context.pushNamed(
-            'chatScreen2',
-            extra: {
-              'sId': item.chatEntityId ?? item.sId,
-              'image': item.entityImage,
-            },
-          );
-        } else {
-          context.pushNamed(
-            'chatScreen',
-            extra: {
-              'sId': item.chatEntityId ?? item.sId,
-              'image': item.entityImage,
-            },
-          );
-        }
+        if (_isNavigating) return;
+        setState(() => _isNavigating = true);
+
+        context.pushNamed('modelProfile', extra: widget.character.sId);
+
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) setState(() => _isNavigating = false);
+        });
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -188,15 +196,15 @@ class StoryAvatarItem extends StatelessWidget {
             padding: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: pinkAccent, width: 2),
+              border: Border.all(color: StoryAvatarItem.pinkAccent, width: 2),
             ),
             child: SizedBox(
               width: 52,
               height: 52,
               child: ClipOval(
-                child: (item.entityImage != null && item.entityImage!.isNotEmpty)
+                child: hasImage
                     ? Image.network(
-                  item.entityImage!,
+                  imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
                       Image.asset("assets/22.png", fit: BoxFit.cover),
@@ -209,7 +217,7 @@ class StoryAvatarItem extends StatelessWidget {
           SizedBox(
             width: 64,
             child: Text(
-              item.entityName ?? AppStrings.defaultUnknown,
+              name,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white70,

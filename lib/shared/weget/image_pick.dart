@@ -1,13 +1,23 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:infinity_love/core/constants/app_color.dart';
 
-import '../../core/constants/const_text.dart'; // Apne path ke according adjust kar lena
+import '../../core/constants/const_text.dart';
 
 class ProfileAvatarPicker extends StatefulWidget {
-  const ProfileAvatarPicker({super.key});
+  final String imageUrl; // 🔗 Server se aaya current avatar URL
+  final void Function(String imageUrl)? onImageSelected; // 🔼 Uploaded Cloudinary URL parent ko bhejo
+
+  const ProfileAvatarPicker({
+    super.key,
+    this.imageUrl = '',
+    this.onImageSelected,
+  });
 
   @override
   State<ProfileAvatarPicker> createState() => _ProfileAvatarPickerState();
@@ -15,24 +25,70 @@ class ProfileAvatarPicker extends StatefulWidget {
 
 class _ProfileAvatarPickerState extends State<ProfileAvatarPicker> {
   File? _selectedImage;
+  bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
-  // --- Image Pick Handler ---
+  // ☁️ Cloudinary Details (Aapke project ke credentials)
+  static const String _cloudName = "bky3dbdc";
+  static const String _uploadPreset = "userCompanionImage";
+
+  Future<String?> _uploadToCloudinary(File file) async {
+    setState(() => _isUploading = true);
+
+    final url = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = _uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    try {
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(responseData);
+        return jsonResponse['secure_url'];
+      } else {
+        debugPrint("Cloudinary Error ${response.statusCode}: $responseData");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Error uploading to Cloudinary: $e");
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context); // Close BottomSheet
     final XFile? pickedFile = await _picker.pickImage(
       source: source,
-      imageQuality: 80, // Compression for smooth memory performance
+      imageQuality: 80,
     );
 
     if (pickedFile != null) {
+      final file = File(pickedFile.path);
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImage = file; // Local preview update
       });
+
+      // ☁️ Cloudinary par upload karo
+      final cloudinaryUrl = await _uploadToCloudinary(file);
+      if (cloudinaryUrl != null && mounted) {
+        widget.onImageSelected?.call(cloudinaryUrl); // Parent ko final URL bhejo
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully!')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload image. Please try again.')),
+        );
+      }
     }
   }
 
-  // --- Bottom Sheet Options (Camera / Gallery) ---
   void _showImagePickerBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -56,13 +112,11 @@ class _ProfileAvatarPickerState extends State<ProfileAvatarPicker> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Camera Option
                     _buildOptionTile(
                       icon: HugeIcons.strokeRoundedCamera01,
                       label: 'Camera',
                       onTap: () => _pickImage(ImageSource.camera),
                     ),
-                    // Gallery Option
                     _buildOptionTile(
                       icon: HugeIcons.strokeRoundedImage01,
                       label: 'Gallery',
@@ -114,15 +168,22 @@ class _ProfileAvatarPickerState extends State<ProfileAvatarPicker> {
     );
   }
 
+  ImageProvider _resolveImage() {
+    if (_selectedImage != null) return FileImage(_selectedImage!);
+    if (widget.imageUrl.isNotEmpty) return NetworkImage(widget.imageUrl);
+    return const AssetImage("assets/22.png");
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool hasImage = _selectedImage != null || widget.imageUrl.isNotEmpty;
+
     return Center(
       child: GestureDetector(
-        onTap: _showImagePickerBottomSheet,
+        onTap: _isUploading ? null : _showImagePickerBottomSheet,
         child: Stack(
           alignment: Alignment.bottomRight,
           children: [
-            // Outer Pink Circle Border
             Container(
               width: 130,
               height: 130,
@@ -140,24 +201,42 @@ class _ProfileAvatarPickerState extends State<ProfileAvatarPicker> {
                   color: AppColors.cardDarkBg,
                   shape: BoxShape.circle,
                 ),
-                child: _selectedImage != null
-                    ? Image.file(
-                  _selectedImage!,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                )
-                    : const Center(
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedUser,
-                    size: 60,
-                    color: AppColors.textSecondaryLight,
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    hasImage
+                        ? Image(
+                      image: _resolveImage(),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: HugeIcon(
+                          icon: HugeIcons.strokeRoundedUser,
+                          size: 60,
+                          color: AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    )
+                        : const Center(
+                      child: HugeIcon(
+                        icon: HugeIcons.strokeRoundedUser,
+                        size: 60,
+                        color: AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    if (_isUploading)
+                      Container(
+                        color: Colors.black54,
+                        child:  Center(
+                          child: CupertinoActivityIndicator(
+                            color: AppColors.primaryPink,
+
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
-
-            // Camera Icon Badge
             Positioned(
               right: 4,
               bottom: 4,

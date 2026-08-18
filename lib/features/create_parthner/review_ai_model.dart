@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
@@ -6,7 +7,6 @@ import 'package:infinity_love/features/create_parthner/repo/create_partner_repo.
 import '../../core/constants/app_btn.dart';
 import '../../core/constants/const_text.dart';
 
-
 class ReviewScreen extends ConsumerWidget {
   const ReviewScreen({super.key});
 
@@ -14,7 +14,7 @@ class ReviewScreen extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.75),
+      barrierColor: Colors.black.withValues(alpha: 0.75),
       builder: (context) => const _SuccessDialogPopup(),
     );
   }
@@ -33,6 +33,12 @@ class ReviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createPartnerProvider);
     final partner = state.partnerData;
+
+    // 🟢 Dynamic Selected / Uploaded Image URL from Riverpod State
+// 🟢 Null-safe handling for imagePath
+    final String partnerImageUrl = (partner.imagePath != null && partner.imagePath!.isNotEmpty)
+        ? partner.imagePath!
+        : '';
 
     return Scaffold(
       backgroundColor: AppColors.bgBlack,
@@ -69,7 +75,7 @@ class ReviewScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView( // 🟢 Fixes RenderFlex Overflow Issue
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,21 +84,42 @@ class ReviewScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     Container(
+                      width: 110,
+                      height: 110,
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.6),
+                            color: AppColors.primaryPink.withValues(alpha: 0.6),
                             blurRadius: 25,
                             spreadRadius: 4,
                           ),
                         ],
                         border: Border.all(color: AppColors.primaryPink, width: 2),
                       ),
-                      child: const CircleAvatar(
-                        radius: 50,
-                        backgroundImage: NetworkImage('https://picsum.photos/200'),
+                      child: ClipOval(
+                        child: partnerImageUrl.isNotEmpty
+                            ? Image.network(
+                          partnerImageUrl,
+                          width: 110,
+                          height: 110,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(
+                              Icons.person,
+                              size: 55,
+                              color: AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        )
+                            : const Center(
+                          child: Icon(
+                            Icons.people_alt_rounded,
+                            size: 55,
+                            color: AppColors.textPrimaryLight,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -175,7 +202,7 @@ class ReviewScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: AppColors.cardDarkBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primaryPink.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.primaryPink.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -196,7 +223,7 @@ class ReviewScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               state.isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primaryPink))
+                  ? const Center(child: CupertinoActivityIndicator(color: AppColors.primaryPink))
                   : AppBtn(
                 onTap: () => _handleCreatePartner(ref, context),
                 borderRadius: 18,
@@ -240,7 +267,7 @@ class _SuccessDialogPopup extends StatelessWidget {
               color: AppColors.cardDarkBg,
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: AppColors.primaryPink.withOpacity(0.5),
+                color: AppColors.primaryPink.withValues(alpha: 0.5),
                 width: 1.5,
               ),
             ),
@@ -322,7 +349,7 @@ class _InsightIconHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.primaryPink.withOpacity(0.2),
+        color: AppColors.primaryPink.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Icon(Icons.bar_chart, color: AppColors.primaryPink, size: 24),
@@ -351,7 +378,7 @@ class _ForwardIconBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.whiteSheetBg.withOpacity(0.2),
+        color: AppColors.whiteSheetBg.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
       child: const Icon(Icons.arrow_forward, color: AppColors.whiteSheetBg, size: 18),
@@ -428,7 +455,7 @@ class InsightRowWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryPink.withOpacity(0.5),
+                      color: AppColors.primaryPink.withValues(alpha: 0.5),
                       blurRadius: 6,
                     ),
                   ],

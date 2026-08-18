@@ -111,10 +111,12 @@
 //   }
 // }
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../../../core/network/api_clinet.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../model/chat_created_model.dart';
 import '../model/chat_init_model.dart';
 import '../model/chat_init_role_model.dart';
 import '../model/massage_model.dart';
@@ -142,7 +144,7 @@ class ChatRepository {
   }
 
   // Companion Chat Initial Fetch
-  Future<ChatInitModel> chatInitCreated(String userId) async {
+  Future<ChatInitModel3> chatInitCreated(String userId) async {
     final String fullUrl = '${ApiEndpoints.companionChatInit}/$userId';
     debugPrint('🚀 [GET Companion ChatInit] Fetching from: $fullUrl');
 
@@ -152,7 +154,7 @@ class ChatRepository {
       debugPrint('📥 [GET Companion ChatInit] Status Code: ${response.statusCode}');
       debugPrint('📦 [GET Companion ChatInit] Raw Response: ${response.data}');
 
-      final parsedModel = ChatInitModel.fromJson(response.data);
+      final parsedModel = ChatInitModel3.fromJson(response.data);
       debugPrint('✅ [GET Companion ChatInit] Successfully parsed ChatInitModel');
 
       return parsedModel;
@@ -188,20 +190,62 @@ class ChatRepository {
 
   // 3️⃣ Simple Chat Send Message
   Future<dynamic> sendMsg(dynamic data) async {
-    final response = await _apiClient.post(
-      ApiEndpoints.sendMsg,
-      data: data,
-    );
-    return response.data;
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.sendMsg,
+        data: data,
+      );
+      return response.data;
+    } catch (e) {
+      debugPrint('❌ [ChatRepository sendMsg Error]: $e');
+
+      final String errText = e.toString().toUpperCase();
+
+      // 🟢 Status Code 403 / 402 / Limit Reached / Subscription Error Detection
+      final bool isSubscriptionRequired = errText.contains('403') ||
+          errText.contains('402') ||
+          errText.contains('DAILY_LIMIT_REACHED') ||
+          errText.contains('PAYMENT_REQUIRED') ||
+          errText.contains('SUBSCRIBED') ||
+          errText.contains('SOMETHING WENT WRONG'); // ApiClient fallback match
+
+      if (isSubscriptionRequired) {
+        debugPrint('🔒 [ChatRepository sendMsg] Daily limit reached or subscription required (403/402)');
+        throw Exception('SUBSCRIPTION_REQUIRED_403');
+      }
+
+      rethrow;
+    }
   }
 
   // Companion Send Message
   Future<dynamic> sendMsgCreated(dynamic data) async {
-    final response = await _apiClient.post(
-      ApiEndpoints.companionSendMsg,
-      data: data,
-    );
-    return response.data;
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.companionSendMsg,
+        data: data,
+      );
+      return response.data;
+    } catch (e) {
+      debugPrint('❌ [ChatRepository sendMsgCreated Error]: $e');
+
+      final String errText = e.toString().toUpperCase();
+
+      // 🟢 Status Code 403 / 402 / Limit Reached / Subscription Error Detection
+      final bool isSubscriptionRequired = errText.contains('403') ||
+          errText.contains('402') ||
+          errText.contains('DAILY_LIMIT_REACHED') ||
+          errText.contains('PAYMENT_REQUIRED') ||
+          errText.contains('SUBSCRIBED') ||
+          errText.contains('SOMETHING WENT WRONG');
+
+      if (isSubscriptionRequired) {
+        debugPrint('🔒 [sendMsgCreated] Subscription or daily limit reached (403/402)');
+        throw Exception('SUBSCRIPTION_REQUIRED_403');
+      }
+
+      rethrow;
+    }
   }
 
   // 4️⃣ RolePlay Send Message
@@ -233,7 +277,58 @@ class ChatRepository {
     } catch (e, stackTrace) {
       debugPrint('❌ [API EXCEPTION] Error in sendMsgRoll API Call: $e');
       debugPrint('🚨 [API STACKTRACE] $stackTrace');
+
+      final String errText = e.toString().toUpperCase();
+
+      // 🟢 403 / 402 / DAILY_LIMIT_REACHED / ApiClient fallback matching
+      final bool isSubscriptionRequired = errText.contains('403') ||
+          errText.contains('402') ||
+          errText.contains('DAILY_LIMIT_REACHED') ||
+          errText.contains('PAYMENT_REQUIRED') ||
+          errText.contains('SUBSCRIBED') ||
+          errText.contains('SOMETHING WENT WRONG');
+
+      if (isSubscriptionRequired) {
+        debugPrint('🔒 [sendMsgRoll] Limit reached / 403 status detected -> Throwing SUBSCRIPTION_REQUIRED_403');
+        throw Exception('SUBSCRIPTION_REQUIRED_403');
+      }
+
       debugPrint('================ 🏁 [API CALL: sendMsgRoll FAILED] ================');
+      rethrow;
+    }
+  }
+// 5️⃣ Delete Single Chat by ID
+  Future<Response> deleteChat() async {
+    final String fullUrl = '${ApiEndpoints.deleteChat}';
+    debugPrint('================ 🚀 [DELETE CHAT STARTED] ================');
+    debugPrint('👉 Target URL: $fullUrl');
+
+    try {
+      final response = await _apiClient.delete(fullUrl);
+      debugPrint('✅ Chat Deleted Successfully!');
+      return response;
+    } catch (e) {
+      debugPrint('❌ Error deleting chat: $e');
+      rethrow;
+    }
+  }
+
+// 6️⃣ Delete Chat All / By Entity Type
+  Future<Response> deleteChatAll({
+    required String entityId,
+    required String chatType,
+  }) async {
+    final String fullUrl = '${ApiEndpoints.deleteChatParticular}/delete-by-entity/$chatType/$entityId';
+
+    debugPrint('================ 🚀 [DELETE CHAT ALL STARTED] ================');
+    debugPrint('👉 Target URL: $fullUrl');
+
+    try {
+      final response = await _apiClient.delete(fullUrl);
+      debugPrint('✅ All Chats Deleted Successfully!');
+      return response;
+    } catch (e) {
+      debugPrint('❌ Error deleting all chats: $e');
       rethrow;
     }
   }

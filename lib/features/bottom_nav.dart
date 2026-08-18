@@ -1,161 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:hugeicons/hugeicons.dart';
-// import 'package:infinity_love/features/profile/profile_screen.dart';
-//
-// import 'home/featrues_screen.dart';
-// import 'home/home_screen.dart';
-// import 'home/massage_screen.dart';
-// import 'home/vibe_screen.dart';
-//
-// class MainNavigationScreen extends StatefulWidget {
-//    MainNavigationScreen({super.key});
-//
-//   @override
-//   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-// }
-//
-// class _MainNavigationScreenState extends State<MainNavigationScreen> {
-//   int _currentIndex = 0;
-//
-//   final List<Widget> _pages = [
-//     ProfilesGridScreen(),
-//     InfiniteLoveScreen(),
-//     MessagesScreen(),
-//     VibeScreen(),
-//     MyProfileScreen(),
-//   ];
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor:  Color(0xFF0F0B11),
-//       body: _pages[_currentIndex],
-//       bottomNavigationBar: CustomBottomNavBar(
-//         currentIndex: _currentIndex,
-//         onTap: (index) {
-//           setState(() {
-//             _currentIndex = index;
-//           });
-//         },
-//       ),
-//     );
-//   }
-// }
-//
-// class CustomBottomNavBar extends StatelessWidget {
-//   final int currentIndex;
-//   final ValueChanged<int> onTap;
-//
-//    CustomBottomNavBar({
-//     super.key,
-//     required this.currentIndex,
-//     required this.onTap,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final List<Map<String, dynamic>> navItems = [
-//       {
-//         'title': 'Home',
-//         'icon': HugeIcons.strokeRoundedHome01,
-//       },
-//       {
-//         'title': 'Features',
-//         'icon': HugeIcons.strokeRoundedStar,
-//       },
-//       {
-//         'title': 'Messages',
-//         'icon': HugeIcons.strokeRoundedComment01,
-//       },
-//       {
-//         'title': 'Vibes',
-//         'icon': HugeIcons.strokeRoundedFlash,
-//       },
-//       {
-//         'title': 'Profile',
-//         'icon': HugeIcons.strokeRoundedUser,
-//       },
-//     ];
-//
-//     return Container(
-//       decoration:  BoxDecoration(
-//         color: Color(0xFF07050A),
-//         border: Border(
-//           top: BorderSide(
-//             color: Color(0xFF181420),
-//             width: 1.0,
-//           ),
-//         ),
-//       ),
-//       child: SafeArea(
-//         child: Container(
-//           height: 64,
-//           padding:  EdgeInsets.symmetric(horizontal: 12),
-//           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceAround,
-//             children: List.generate(
-//               navItems.length,
-//                   (index) => _buildNavItem(
-//                 context: context,
-//                 index: index,
-//                 item: navItems[index],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildNavItem({
-//     required BuildContext context,
-//     required int index,
-//     required Map<String, dynamic> item,
-//   }) {
-//     final bool isSelected = currentIndex == index;
-//     final Color activeColor = Colors.white;
-//     final Color inactiveColor =  Color(0xFF716A7C);
-//
-//     bool isHomeTab = index == 0;
-//
-//     return Expanded(
-//       child: InkWell(
-//         onTap: () => onTap(index),
-//         splashColor: Colors.transparent,
-//         highlightColor: Colors.transparent,
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             if (isHomeTab)
-//               Icon(
-//                 Icons.home_rounded,
-//                 color: isSelected ? activeColor : inactiveColor,
-//                 size: 25,
-//               )
-//             else
-//             // HugeIcon Widget use karne se TypeError TypeCast issue solve ho jayega
-//               HugeIcon(
-//                 icon: item['icon'],
-//                 color: isSelected ? activeColor : inactiveColor,
-//                 size: 23,
-//               ),
-//              SizedBox(height: 5),
-//             Text(
-//               item['title'],
-//               style: TextStyle(
-//                 color: isSelected ? activeColor : inactiveColor,
-//                 fontSize: 11,
-//                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-//                 letterSpacing: 0.1,
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -169,7 +11,7 @@ import 'home/massage_screen.dart';
 import 'home/vibe_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-   MainNavigationScreen({super.key});
+  const MainNavigationScreen({super.key});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -178,12 +20,12 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages =  [
-    ProfilesGridScreen(),
-    InfiniteLoveScreen(),
-    MessagesScreen(),
-    VibeScreen(),
-    MyProfileScreen(),
+  final List<Widget> _pages = [
+    const ProfilesGridScreen(),
+    const InfiniteLoveScreen(),
+    const MessagesScreen(),
+     VibeScreen(),
+    const MyProfileScreen(),
   ];
 
   /// Show Exit Confirmation Dialog
@@ -195,9 +37,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding:  EdgeInsets.symmetric(horizontal: 28),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
           child: Container(
-            padding:  EdgeInsets.all(22),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: AppColors.cardDarkBg,
               borderRadius: BorderRadius.circular(24),
@@ -211,32 +53,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               children: [
                 // Warning / Exit Icon
                 Container(
-                  padding:  EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.primaryPink.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child:  Icon(
+                  child: const Icon(
                     Icons.power_settings_new_rounded,
                     color: AppColors.primaryPink,
                     size: 30,
                   ),
                 ),
 
-                 SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Title
-                 CustomText.bold(
+                CustomText.bold(
                   'Exit App?',
                   color: AppColors.textPrimaryLight,
                   fontSize: 20,
                   textAlign: TextAlign.center,
                 ),
 
-                 SizedBox(height: 8),
+                const SizedBox(height: 8),
 
                 // Description
-                 CustomText.regular(
+                CustomText.regular(
                   'Are you sure you want to exit the application?',
                   color: AppColors.textSecondaryLight,
                   fontSize: 14,
@@ -244,7 +86,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   height: 1.3,
                 ),
 
-                 SizedBox(height: 24),
+                const SizedBox(height: 24),
 
                 // Action Buttons (Cancel / Exit)
                 Row(
@@ -254,7 +96,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       child: TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
                         style: TextButton.styleFrom(
-                          padding:  EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
@@ -262,7 +104,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             ),
                           ),
                         ),
-                        child:  CustomText.medium(
+                        child: CustomText.medium(
                           'Cancel',
                           color: AppColors.textPrimaryLight,
                           fontSize: 15,
@@ -270,7 +112,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       ),
                     ),
 
-                     SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
                     // Exit Button
                     Expanded(
@@ -278,13 +120,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         onPressed: () => Navigator.of(dialogContext).pop(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryPink,
-                          padding:  EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child:  CustomText.bold(
+                        child: CustomText.bold(
                           'Exit',
                           color: AppColors.whiteSheetBg,
                           fontSize: 15,
@@ -310,7 +152,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
-        // Show Exit Confirmation Popup
+        // 🟢 Step 1: Agar kisi doosre tab (1, 2, 3, 4) par ho, to pehle Home tab (0) par redirect karo
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+          return;
+        }
+
+        // 🟢 Step 2: Agar pehle se Home Tab (0) par ho, tab Exit Dialog dikhao
         final shouldExit = await _showExitConfirmationDialog(context);
 
         if (shouldExit && context.mounted) {
@@ -320,7 +170,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.bgBlack,
-        body: _pages[_currentIndex],
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
         bottomNavigationBar: CustomBottomNavBar(
           currentIndex: _currentIndex,
           onTap: (index) {
@@ -338,7 +191,7 @@ class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-   CustomBottomNavBar({
+  const CustomBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -346,7 +199,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> navItems =  [
+    final List<Map<String, dynamic>> navItems = [
       {
         'title': 'Home',
         'icon': HugeIcons.strokeRoundedHome01,
@@ -370,7 +223,7 @@ class CustomBottomNavBar extends StatelessWidget {
     ];
 
     return Container(
-      decoration:  BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.bgDarkestPurple,
         border: Border(
           top: BorderSide(
@@ -382,7 +235,7 @@ class CustomBottomNavBar extends StatelessWidget {
       child: SafeArea(
         child: Container(
           height: 64,
-          padding:  EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
@@ -405,8 +258,8 @@ class CustomBottomNavBar extends StatelessWidget {
     required Map<String, dynamic> item,
   }) {
     final bool isSelected = currentIndex == index;
-     Color activeColor = AppColors.textPrimaryLight;
-     Color inactiveColor = AppColors.textSecondaryDark;
+    final Color activeColor = AppColors.textPrimaryLight;
+    final Color inactiveColor = AppColors.textSecondaryDark;
 
     final bool isHomeTab = index == 0;
 
@@ -430,7 +283,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 color: isSelected ? activeColor : inactiveColor,
                 size: 23,
               ),
-             SizedBox(height: 5),
+            const SizedBox(height: 5),
             CustomText.medium(
               item['title'],
               color: isSelected ? activeColor : inactiveColor,

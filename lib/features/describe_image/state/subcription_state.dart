@@ -1,22 +1,67 @@
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../model/subcription_model.dart';
+//
+// class SubcriptionState {
+//   final AsyncValue<SubcriptionModel?> subcriptionList;
+//   final bool isSending;
+//
+//   const SubcriptionState({
+//     this.subcriptionList = const AsyncValue.data(null),
+//     this.isSending = false,
+//   });
+//
+//   SubcriptionState copyWith({
+//     AsyncValue<SubcriptionModel?>? subcriptionList,
+//     bool? isSending,
+//   }) {
+//     return SubcriptionState(
+//       subcriptionList: subcriptionList ?? this.subcriptionList,
+//       isSending: isSending ?? this.isSending,
+//     );
+//   }
+// }
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/subcription_model.dart';
+import '../../describe_image/model/subcription_model.dart';
+import '../../payment/model/avilable_model.dart';
 
-class SubcriptionState {
+enum SubscribeStatus {
+  idle,
+  initiating,
+  launchingPaytm,
+  success,
+  failure,
+}
+
+class SubscribeState {
   final AsyncValue<SubcriptionModel?> subcriptionList;
-  final bool isSending;
+  final AsyncValue<AvailablePaymentModel?> paymentAvailableList;
+  final SubscribeStatus status;
+  final String? errorMessage;
 
-  const SubcriptionState({
+  const SubscribeState({
     this.subcriptionList = const AsyncValue.data(null),
-    this.isSending = false,
+    this.paymentAvailableList = const AsyncValue.data(null),
+    this.status = SubscribeStatus.idle,
+    this.errorMessage,
   });
 
-  SubcriptionState copyWith({
+  bool get isBusy =>
+      status == SubscribeStatus.initiating ||
+          status == SubscribeStatus.launchingPaytm;
+
+  SubscribeState copyWith({
     AsyncValue<SubcriptionModel?>? subcriptionList,
-    bool? isSending,
+    AsyncValue<AvailablePaymentModel?>? paymentAvailableList,
+    SubscribeStatus? status,
+    String? errorMessage,
   }) {
-    return SubcriptionState(
+    return SubscribeState(
       subcriptionList: subcriptionList ?? this.subcriptionList,
-      isSending: isSending ?? this.isSending,
+      paymentAvailableList:
+      paymentAvailableList ?? this.paymentAvailableList,
+      status: status ?? this.status,
+      errorMessage: errorMessage, // 🟢 Allows clearing errorMessage when null is passed explicitly
     );
   }
 }

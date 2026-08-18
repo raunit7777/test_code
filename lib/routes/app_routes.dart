@@ -9,6 +9,7 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/otp_screen.dart';
 import '../features/bottom_nav.dart';
 import '../features/chat/chat_screen_3.dart';
+import '../features/custmization/model_custmization.dart';
 import '../features/describe_image/subcription_screen.dart';
 import '../features/home/chat_screen_2.dart';
 import '../features/profile/model_profile_screen.dart';
@@ -106,14 +107,6 @@ import '../features/splash/screens/splash_screen.dart';
 //   );
 // });
 
-
-
-
-
-
-
-
-
 // 🟢 TOP-LEVEL GLOBAL NAVIGATOR KEY (ApiClient se redirect ke liye compulsory hai)
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -158,7 +151,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutesName.bottomNavBar,
         name: 'mainNav',
-        builder: (context, state) =>  MainNavigationScreen(),
+        builder: (context, state) => MainNavigationScreen(),
       ),
 
       GoRoute(
@@ -175,6 +168,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ModelProfileDetailScreen(sId: sId);
         },
       ),
+      GoRoute(
+        path: RoutesName.customizePersonalityScreen,
+        name: 'aiedit',
+        builder: (context, state) {
+          // Only receiving sId string from state.extra
+          final String sId = (state.extra as String?) ?? '';
+
+          return CustomizePersonalityScreen(
+            userId: sId,
+          );
+        },
+      ),
 
       // 7. Chat Screen
       GoRoute(
@@ -184,10 +189,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           final extraData = state.extra as Map<String, dynamic>?;
           final String? sId = extraData?['sId'] as String?;
           final String? imageUrl = extraData?['image'] as String?;
+          final String? name = extraData?['name'] as String?;
 
           return ChatScreen(
             sId: sId,
             imageUrl: imageUrl,
+            name: name,
           );
         },
       ),
@@ -213,13 +220,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final extraData = state.extra as Map<String, dynamic>?;
           final String? sId = extraData?['sId'] as String?;
+          final String? id = extraData?['id'] as String? ??
+              extraData?['_id']
+                  as String?; // 🟢 Fixed lowercase 'id' extraction with '_id' fallback
           final String? imageUrl = extraData?['image'] as String?;
-          final String? name = extraData?['name'] as String?; // 🟢 Fixed key extraction
+          final String? name = extraData?['name'] as String?;
 
           return ChatScreen3(
             sId: sId,
+            id: id, // 🟢 Fixed case mismatch variable (id)
             imageUrl: imageUrl,
-            name: name, // 🟢 Correctly passing name parameter
+            name: name,
           );
         },
       ),

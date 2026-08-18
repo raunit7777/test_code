@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "506798414073",
+    "project_id": "infinitylove-9f921",
+    "storage_bucket": "infinitylove-9f921.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506798414073:android:d75454c566bdc15e7a6a28",
+        "android_client_info": {
+          "package_name": "com.fc.infinity_loved"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_gEAWe4Vv_xoT8vSg_XKyCm3zreL_CyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

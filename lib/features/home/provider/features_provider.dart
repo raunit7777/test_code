@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../core/di/service_locator.dart';
 import '../home_repo/featuers_repo.dart';
+import '../model/vibe_model.dart' show VibeModel, Data, Vibes;
 import '../state/features_state.dart';
 
 // ✅ Main Provider Declaration
@@ -26,6 +28,72 @@ class ProfileNotifier extends StateNotifier<FeaturesState> {
     }
   }
 
+
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+  bool _hasMoreData = true;
+
+// 🟢 Initial Fetching Logic
+  Future<void> fetchVibeList() async {
+    _currentPage = 1;
+    _hasMoreData = true;
+    state = state.copyWith(vibeList: const AsyncValue.loading());
+
+    try {
+      final response = await _repository.getVibe(page: _currentPage);
+      state = state.copyWith(vibeList: AsyncValue.data(response));
+    } on DioException catch (e, stack) {
+      String errorMessage = e.response?.data['message'] ?? e.message ?? 'Network error';
+      state = state.copyWith(vibeList: AsyncValue.error(Exception(errorMessage), stack));
+    } catch (e, stack) {
+      state = state.copyWith(vibeList: AsyncValue.error(e, stack));
+    }
+  }
+
+// 🟢 Load More Pagination Logic (Fixed List<Vibes> Type Issue)
+  Future<void> fetchMoreVibeList() async {
+    if (_isFetchingMore || !_hasMoreData) return;
+
+    final currentVibeModel = state.vibeList.asData?.value;
+    if (currentVibeModel == null) return;
+
+    _isFetchingMore = true;
+
+    try {
+      final nextPage = _currentPage + 1;
+      final response = await _repository.getVibe(page: nextPage);
+
+      final newVibes = response.data?.vibes ?? [];
+      if (newVibes.isEmpty) {
+        _hasMoreData = false;
+      } else {
+        _currentPage = nextPage;
+
+        // 🎯 Type Casting Fix: Explicitly declare <Vibes>
+        final List<Vibes> updatedVibesList = <Vibes>[
+          ...?currentVibeModel.data?.vibes,
+          ...newVibes,
+        ];
+
+        final updatedData = Data(
+          vibes: updatedVibesList,
+          total: response.data?.total ?? currentVibeModel.data?.total,
+        );
+
+        final updatedModel = VibeModel(
+          success: response.success,
+          message: response.message,
+          data: updatedData,
+        );
+
+        state = state.copyWith(vibeList: AsyncValue.data(updatedModel));
+      }
+    } catch (e) {
+      // Handle or ignore pagination errors silently
+    } finally {
+      _isFetchingMore = false;
+    }
+  }
 
   Future<void> fetchConversationList() async {
     state = state.copyWith(conversationList: const AsyncValue.loading());

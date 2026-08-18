@@ -7,6 +7,7 @@ import '../model/featurs_model.dart';
 import '../model/profile_detail_model.dart';
 import '../model/role_play_deatails.dart';
 import '../model/role_play_model.dart';
+import '../model/vibe_model.dart';
 
 
 class FeatuerRepository {
@@ -22,7 +23,12 @@ class FeatuerRepository {
     return FeatureModel.fromJson(response.data);
   }
 
-
+  Future<VibeModel> getVibe({int page = 1, int limit = 10}) async {
+    final response = await _apiClient.get(
+      '${ApiEndpoints.vibeList}?page=$page&limit=$limit',
+    );
+    return VibeModel.fromJson(response.data);
+  }
 
   Future<ConversationModel> getConversationList() async {
     debugPrint('🚀 [GET ConversationList] Fetching from: ${ApiEndpoints.conversationList}');

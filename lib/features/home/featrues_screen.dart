@@ -35,7 +35,7 @@ class InfiniteLoveScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.white),
                     ),
                     TextSpan(
-                      text: 'Love',
+                      text: 'Loved',
                       style: TextStyle(color: pinkAccent),
                     ),
                   ],

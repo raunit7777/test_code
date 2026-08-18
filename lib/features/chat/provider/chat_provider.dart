@@ -3,13 +3,15 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_riverpod/legacy.dart';
+// import 'package:go_router/go_router.dart';
 // import 'package:infinity_love/features/chat/model/chat_init_model.dart';
 // import 'package:infinity_love/features/chat/model/chat_init_role_model.dart';
 // import '../../../../core/di/service_locator.dart';
+// import '../../../routes/app_routes.dart';
 // import '../../home/state/features_state.dart';
 // import '../model/massage_model.dart';
 // import '../repo/chat_repo.dart';
-// import 'package:go_router/go_router.dart';
+//
 // final chatNotifierProvider =
 // StateNotifierProvider<ChatNotifier, FeaturesState>((ref) {
 //   return ChatNotifier(sl<ChatRepository>());
@@ -21,59 +23,91 @@
 //   ChatNotifier(this._repository) : super(const FeaturesState());
 //
 //   // 1️⃣ Simple Chat Initial Fetch
-//   Future<void> fetchChatList(dynamic sId, {BuildContext? context}) async {
+//   Future<void> fetchChatList(dynamic sId, dynamic name,
+//       {String? imageUrl}) async {
 //     debugPrint('================ 🚀 [fetchChatList STARTED] ================');
 //     state = state.copyWith(chatInit: const AsyncValue.loading());
 //
 //     try {
 //       final response = await _repository.chatInit(sId.toString());
+//
 //       state = state.copyWith(chatInit: AsyncValue.data(response));
 //       debugPrint('✅ [fetchChatList SUCCESS]');
+//
+//       if (response != null &&
+//           (response.success == true || response.data != null)) {
+//         debugPrint(
+//             '🔀 [SUCCESS 200/201] Navigating to chatScreen via Global Key...');
+//
+//         final BuildContext? globalContext = rootNavigatorKey.currentContext;
+//
+//         if (globalContext != null && globalContext.mounted) {
+//           globalContext.pushNamed(
+//             'chatScreen',
+//             extra: {
+//               'sId': sId.toString(),
+//               'image': imageUrl ?? '',
+//               'name': name,
+//             },
+//           );
+//           debugPrint('🎉 Navigation to chatScreen completed successfully!');
+//         } else {
+//           debugPrint('⚠️ Global Context unmounted or null!');
+//         }
+//       }
 //     } catch (e, stack) {
 //       debugPrint('❌ [fetchChatList ERROR]: $e');
 //       state = state.copyWith(chatInit: AsyncValue.error(e, stack));
 //
 //       final String errText = e.toString().toUpperCase();
-//
-//       // Flexible 402 / Payment match logic
 //       final bool is402 = errText.contains('402') ||
 //           errText.contains('PAYMENT_REQUIRED') ||
 //           errText.contains('SUBSCRIBED') ||
-//           errText.contains('SOMETHING WENT WRONG'); // ApiClient fallback match
+//           errText.contains('SOMETHING WENT WRONG');
 //
 //       if (is402) {
-//         debugPrint('🔒 402 Payment Required match found!');
-//
-//         if (context != null && context.mounted) {
-//           debugPrint('🔀 Navigating to Premium Screen...');
-//           context.pushNamed('premium');
-//         } else {
-//           debugPrint('⚠️ Navigation Context missing or not mounted.');
-//         }
+//         debugPrint(
+//             '🔒 402 Payment Required match found! Global Key Redirecting...');
+//         rootNavigatorKey.currentContext?.pushNamed('premium');
 //       }
 //     }
 //   }
 //
-//   Future<void> fetchChatListCompanion(dynamic sId) async {
+//   // Fetch Companion Chat List
+// // Fetch Companion Chat List
+//   Future<void> fetchChatListCompanion(dynamic sId,
+//       {BuildContext? context}) async {
 //     state = state.copyWith(chatInit: const AsyncValue.loading());
 //     try {
-//       final response = await _repository.chatInitCreated(sId.toString());
-//       state = state.copyWith(chatInit: AsyncValue.data(response));
+//       final response3 = await _repository.chatInitCreated(sId.toString());
+//
+//       // 🟢 Fail-safe conversion via Json
+//       final mappedResponse = ChatInitModel.fromJson(response3.toJson());
+//
+//       state = state.copyWith(chatInit: AsyncValue.data(mappedResponse));
 //     } catch (e, stack) {
 //       state = state.copyWith(chatInit: AsyncValue.error(e, stack));
+//
+//       final String errText = e.toString().toUpperCase();
+//       if (errText.contains('402') ||
+//           errText.contains('PAYMENT_REQUIRED') ||
+//           errText.contains('SUBSCRIBED')) {
+//         if (context != null && context.mounted) {
+//           context.pushNamed('premium');
+//         }
+//       }
 //     }
 //   }
-//
 //   // 2️⃣ RolePlay Chat Initial Fetch
-//   Future<void> fetchChatListRole(dynamic sId) async {
+//   Future<void> fetchChatListRole(dynamic sId,
+//       {String? imageUrl, BuildContext? context}) async {
+//     debugPrint(
+//         '================ 🚀 [fetchChatListRole STARTED] ================');
 //     state = state.copyWith(roleChatInit: const AsyncValue.loading());
+//
 //     try {
 //       final response = await _repository.chatInitRole(sId.toString());
 //
-//       // 🔧 FIX: history se aane wale purane messages me bhi kabhi-kabhi
-//       // content stringified JSON ({"reply": "...", ...}) ke roop me aata hai.
-//       // Yaha history load hote hi sab messages ko clean kar dete hain
-//       // taaki purani chats bhi sahi text dikhayein, raw JSON nahi.
 //       if (response.data?.messages != null) {
 //         for (final msg in response.data!.messages!) {
 //           msg.content = _extractReplyText(msg.content);
@@ -81,12 +115,41 @@
 //       }
 //
 //       state = state.copyWith(roleChatInit: AsyncValue.data(response));
+//
+//       if (response.success == true || response.data != null) {
+//         final BuildContext? globalContext = rootNavigatorKey.currentContext;
+//
+//         if (globalContext != null && globalContext.mounted) {
+//           globalContext.pushNamed(
+//             'chatScreen2',
+//             extra: {
+//               'sId': sId.toString(),
+//               'image': imageUrl ?? '',
+//             },
+//           );
+//           debugPrint('🎉 Navigation to chatScreen2 completed successfully!');
+//         } else {
+//           debugPrint('⚠️ Global Context unmounted or null!');
+//         }
+//       }
 //     } catch (e, stack) {
+//       debugPrint('❌ [fetchChatListRole ERROR]: $e');
 //       state = state.copyWith(roleChatInit: AsyncValue.error(e, stack));
+//
+//       final String errText = e.toString().toUpperCase();
+//       final bool is402 = errText.contains('402') ||
+//           errText.contains('PAYMENT_REQUIRED') ||
+//           errText.contains('SUBSCRIBED') ||
+//           errText.contains('SOMETHING WENT WRONG');
+//
+//       if (is402) {
+//         debugPrint(
+//             '🔒 402 Payment Required match found! Global Key Redirecting...');
+//         rootNavigatorKey.currentContext?.pushNamed('premium');
+//       }
 //     }
 //   }
 //
-//   // 3️⃣ Simple Chat Local Message Append
 //   void addMessageLocally(Messages newMessage) {
 //     state.chatInit.whenData((chatData) {
 //       if (chatData != null && chatData.data != null) {
@@ -108,21 +171,27 @@
 //     });
 //   }
 //
-//   // 4️⃣ 🟢 RolePlay Chat Local Message Append (Force UI Re-render)
-//   // 🔧 FIX: pehle ye function alag-alag types (Messages / RoleChatMessage / Map)
-//   // ko ek hi List<dynamic> me daal ke fir ChatInitRoleModel.fromJson(roleData.toJson())
-//   // call karta tha. toJson() jab kisi non-RoleChatMessage object pe call hota tha
-//   // to runtime TypeError aata tha, jo silently catch ho jaata tha aur UI update
-//   // hi nahi hota tha. Ab hum sab kuch RoleChatMessage me normalize karte hain
-//   // aur naya model bina JSON round-trip ke seedha bana dete hain.
+//   // 🟢 Helper to remove temp simple message if API fails
+//   void _removeLocalMessage(String tempId) {
+//     state.chatInit.whenData((chatData) {
+//       if (chatData?.data?.messages != null) {
+//         final updatedList =
+//         chatData!.data!.messages!.where((m) => m.sId != tempId).toList();
+//         chatData.data!.messages = updatedList;
+//         state = state.copyWith(
+//           chatInit: AsyncValue.data(chatData),
+//         );
+//         debugPrint('🗑️ Removed temp message ($tempId) from simple chat UI');
+//       }
+//     });
+//   }
+//
 //   void addRoleMessageLocally(dynamic newMessage) {
 //     state.roleChatInit.whenData((roleData) {
 //       if (roleData != null && roleData.data != null) {
 //         final currentMessages =
 //         List<RoleChatMessage>.from(roleData.data!.messages ?? []);
 //
-//         // 🔧 Kisi bhi input type (Messages / RoleChatMessage / Map) ko
-//         // safely RoleChatMessage me convert karo
 //         final RoleChatMessage newMsg = _toRoleChatMessage(newMessage);
 //
 //         final bool exists = currentMessages.any((msg) =>
@@ -156,7 +225,6 @@
 //     });
 //   }
 //
-//   // 🔧 Helper: har tarah ke message object ko RoleChatMessage me convert karta hai
 //   RoleChatMessage _toRoleChatMessage(dynamic msg) {
 //     if (msg is RoleChatMessage) {
 //       return msg;
@@ -178,7 +246,6 @@
 //         createdAt: msg['createdAt']?.toString(),
 //       );
 //     } else {
-//       // fallback: dynamic getter access
 //       try {
 //         return RoleChatMessage(
 //           sId: msg.sId?.toString() ?? msg.id?.toString(),
@@ -224,20 +291,17 @@
 //       }
 //     }
 //
-//     // 🟢 FIX: Asterisks (*) wali lines remove karke sirf spoken reply nikalna
 //     return _extractDialogueOnly(extractedResult);
 //   }
 //
 //   String _extractDialogueOnly(String fullText) {
 //     if (fullText.isEmpty) return fullText;
 //
-//     // 1. Regex jo '*' se start aur '*' pe end hone wale saare blocks ko remove karega (dotAll: true for newlines)
 //     String cleanedText = fullText.replaceAll(
 //       RegExp(r'\*.*?\*', dotAll: true),
 //       '',
 //     );
 //
-//     // 2. Multiline empty spaces aur newlines ko single clean line/paragraph me normalize karein
 //     cleanedText = cleanedText
 //         .split('\n')
 //         .map((line) => line.trim())
@@ -246,13 +310,18 @@
 //
 //     return cleanedText.trim();
 //   }
+//
 //   // 5️⃣ Simple Send Message API Call
 //   Future<void> sendMessage({
 //     required String characterId,
 //     required String conversationId,
 //     required String messageText,
 //   }) async {
-//     final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+//     debugPrint('================ 🚀 [sendMessage STARTED] ================');
+//
+//     if (messageText.trim().isEmpty) return;
+//
+//     final String tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
 //     final userMessage = Messages(
 //       sId: tempId,
 //       conversationId: conversationId,
@@ -260,8 +329,9 @@
 //       role: 'user',
 //       createdAt: DateTime.now().toIso8601String(),
 //     );
-//     addMessageLocally(userMessage);
 //
+//     // 1️⃣ Local Update
+//     addMessageLocally(userMessage);
 //     state = state.copyWith(isSending: true);
 //
 //     final Map<String, dynamic> requestData = {
@@ -273,8 +343,16 @@
 //     try {
 //       final response = await _repository.sendMsg(requestData);
 //
-//       if (response != null && response['success'] == true) {
-//         final companionData = response['data']?['companionMessage'];
+//       final int? statusCode = response is Response
+//           ? response.statusCode
+//           : (response?['statusCode'] ?? 200);
+//       final dynamic responseData =
+//       response is Response ? response.data : response;
+//
+//       if ((statusCode == 200 || statusCode == 201) &&
+//           responseData != null &&
+//           responseData['success'] == true) {
+//         final companionData = responseData['data']?['companionMessage'];
 //
 //         if (companionData != null) {
 //           final aiMessage = Messages(
@@ -282,33 +360,75 @@
 //                 companionData['_id'] ??
 //                 DateTime.now().millisecondsSinceEpoch.toString(),
 //             conversationId:
-//             response['data']?['conversationId'] ?? conversationId,
+//             responseData['data']?['conversationId'] ?? conversationId,
 //             content: _extractReplyText(companionData['content']?.toString()),
 //             role: companionData['role'] ?? 'assistant',
-//             createdAt: companionData['createdAt'],
+//             createdAt: companionData['createdAt'] ??
+//                 DateTime.now().toIso8601String(),
 //           );
 //
 //           addMessageLocally(aiMessage);
 //         }
+//       } else {
+//         _removeLocalMessage(tempId);
 //       }
-//     } catch (e) {
-//       debugPrint("Error sending message: $e");
+//     } catch (e, stack) {
+//       debugPrint('❌ Exception Caught in sendMessage: $e');
+//       _removeLocalMessage(tempId);
+//
+//       int? statusCode;
+//       String rawResponseText = '';
+//
+//       if (e is DioException) {
+//         statusCode = e.response?.statusCode;
+//         rawResponseText = e.response?.data?.toString() ?? '';
+//       }
+//
+//       final String fullErrorString =
+//       '${e.toString()} $rawResponseText'.toUpperCase();
+//
+//       debugPrint('🔍 Extracted StatusCode: $statusCode');
+//       debugPrint('📄 Full Error Text: $fullErrorString');
+//
+//       final bool isLimitOrSubscriptionError = statusCode == 403 ||
+//           statusCode == 402 ||
+//           fullErrorString.contains('403') ||
+//           fullErrorString.contains('402') ||
+//           fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+//           fullErrorString.contains('PAYMENT_REQUIRED') ||
+//           fullErrorString.contains('SUBSCRIBE') ||
+//           fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+//           fullErrorString.contains('SOMETHING WENT WRONG') ||
+//           fullErrorString.contains('LIMIT');
+//
+//       if (isLimitOrSubscriptionError) {
+//         debugPrint(
+//             '🔒 [LIMIT REACHED / 403 DETECTED] Redirecting to Subscription Screen...');
+//
+//         final BuildContext? globalContext = rootNavigatorKey.currentContext;
+//         if (globalContext != null && globalContext.mounted) {
+//           globalContext.pushNamed('premium');
+//           debugPrint('✅ Navigated to Premium screen successfully!');
+//         } else {
+//           debugPrint('⚠️ Global context null or unmounted!');
+//         }
+//       } else {
+//         debugPrint('ℹ️ Generic error (Not a subscription or limit error).');
+//       }
 //     } finally {
 //       state = state.copyWith(isSending: false);
+//       debugPrint('================ 🏁 [sendMessage FINISHED] ================');
 //     }
 //   }
 //
-//
-//
+//   // Companion Send Message API Call
 //   Future<void> sendMessageCompanion({
 //     required String characterId,
 //     required String conversationId,
 //     required String messageText,
-//
 //   }) async {
 //     if (messageText.trim().isEmpty) return;
-// print("rammmm${conversationId}");
-//     // 🟢 1. Temporary unique ID generated for Optimistic Update
+//
 //     final String tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
 //
 //     final userMessage = Messages(
@@ -319,9 +439,7 @@
 //       createdAt: DateTime.now().toIso8601String(),
 //     );
 //
-//     // 🟢 2. Add message locally instantly (Screen par turant show hoga)
 //     addMessageLocally(userMessage);
-//
 //     state = state.copyWith(isSending: true);
 //
 //     final Map<String, dynamic> requestData = {
@@ -331,11 +449,18 @@
 //     };
 //
 //     try {
-//       // 🟢 3. Call API
 //       final response = await _repository.sendMsgCreated(requestData);
 //
-//       if (response != null && response['success'] == true) {
-//         final companionData = response['data']?['companionMessage'];
+//       final int? statusCode = response is Response
+//           ? response.statusCode
+//           : (response?['statusCode'] ?? 200);
+//       final dynamic responseData =
+//       response is Response ? response.data : response;
+//
+//       if ((statusCode == 200 || statusCode == 201) &&
+//           responseData != null &&
+//           responseData['success'] == true) {
+//         final companionData = responseData['data']?['companionMessage'];
 //
 //         if (companionData != null) {
 //           final aiMessage = Messages(
@@ -343,43 +468,88 @@
 //                 companionData['_id'] ??
 //                 DateTime.now().millisecondsSinceEpoch.toString(),
 //             conversationId:
-//             response['data']?['conversationId'] ?? conversationId,
+//             responseData['data']?['conversationId'] ?? conversationId,
 //             content: _extractReplyText(companionData['content']?.toString()),
 //             role: companionData['role'] ?? 'assistant',
-//             createdAt: companionData['createdAt'] ?? DateTime.now().toIso8601String(),
+//             createdAt: companionData['createdAt'] ??
+//                 DateTime.now().toIso8601String(),
 //           );
 //
-//           // 🟢 4. Add Companion's response locally
 //           addMessageLocally(aiMessage);
 //         }
 //       } else {
-//         // API returned success = false -> Revert optimistic message
 //         _removeLocalMessage(tempId);
 //       }
 //     } catch (e) {
 //       debugPrint("❌ Error sending companion message: $e");
-//       // API Failed -> Revert temporary message from UI
 //       _removeLocalMessage(tempId);
+//
+//       int? statusCode;
+//       String rawResponseText = '';
+//
+//       if (e is DioException) {
+//         statusCode = e.response?.statusCode;
+//         rawResponseText = e.response?.data?.toString() ?? '';
+//       }
+//
+//       final String fullErrorString =
+//       '${e.toString()} $rawResponseText'.toUpperCase();
+//
+//       final bool isLimitOrSubscriptionError = statusCode == 403 ||
+//           statusCode == 402 ||
+//           fullErrorString.contains('403') ||
+//           fullErrorString.contains('402') ||
+//           fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+//           fullErrorString.contains('PAYMENT_REQUIRED') ||
+//           fullErrorString.contains('SUBSCRIBE') ||
+//           fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+//           fullErrorString.contains('SOMETHING WENT WRONG');
+//
+//       if (isLimitOrSubscriptionError) {
+//         debugPrint(
+//             '🔒 [LIMIT REACHED / 403] Redirecting Companion Chat to Premium Screen...');
+//
+//         final BuildContext? globalContext = rootNavigatorKey.currentContext;
+//         if (globalContext != null && globalContext.mounted) {
+//           globalContext.pushNamed('premium');
+//           debugPrint('✅ Navigated to Premium screen successfully!');
+//         } else {
+//           debugPrint('⚠️ Global context null or unmounted!');
+//         }
+//       }
 //     } finally {
 //       state = state.copyWith(isSending: false);
 //     }
 //   }
 //
-// // 🟢 Helper to remove temp message if API fails
-//   void _removeLocalMessage(String tempId) {
-//     final updatedList = state.messages.where((m) => m.sId != tempId).toList();
-//     state = state.copyWith(messages: updatedList);
+//   // 🟢 Helper method: API failure ke case me temporary message local list se hatane ke liye
+//   void _removeRoleLocalMessage(String tempId) {
+//     state.roleChatInit.whenData((roleData) {
+//       if (roleData?.data?.messages != null) {
+//         final updatedList =
+//         roleData!.data!.messages!.where((m) => m.sId != tempId).toList();
+//         roleData.data!.messages = updatedList;
+//         state = state.copyWith(
+//           roleChatInit: AsyncValue.data(roleData),
+//         );
+//         debugPrint('🗑️ Removed temp message with ID: $tempId from UI state');
+//       }
+//     });
 //   }
 //
-//   // 6️⃣ 🟢 RolePlay Send Message API Call
+//   // 6️⃣ RolePlay Send Message API Call
 //   Future<void> sendMessageRoll({
 //     required String roleplayId,
 //     required String conversationId,
 //     required String sessionId,
 //     required String messageText,
 //   }) async {
-//     debugPrint('================ 🚀 [SEND MESSAGE ROLL STARTED] ================');
-//     final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+//     debugPrint(
+//         '================ 🚀 [SEND MESSAGE ROLL STARTED] ================');
+//
+//     if (messageText.trim().isEmpty) return;
+//
+//     final String tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
 //
 //     final userMessage = Messages(
 //       sId: tempId,
@@ -389,6 +559,7 @@
 //       createdAt: DateTime.now().toIso8601String(),
 //     );
 //
+//     // 1️⃣ Optimistic Local Update
 //     addRoleMessageLocally(userMessage);
 //     state = state.copyWith(isSending: true);
 //
@@ -407,18 +578,14 @@
 //         final companion = responseModel.data!.companionMessage;
 //
 //         if (companion != null) {
-//           // 🔧 FIX: backend content stringified JSON bhejta hai
-//           // ({"reply": "...", "language": "...", "intent": "..."}),
-//           // usme se actual "reply" text nikaalte hain
 //           final String parsedContent = _extractReplyText(companion.content);
 //
-//           debugPrint(
-//               '🔎 [PARSE CHECK] raw content len=${companion.content?.length}, parsed len=${parsedContent.length}');
-//
 //           final aiMessage = Messages(
-//             sId: companion.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-//             conversationId: responseModel.data!.conversationId ?? conversationId,
-//             content: parsedContent, // 👈 ab yaha "parsedContent" use ho raha hai, raw JSON nahi
+//             sId: companion.id ??
+//                 DateTime.now().millisecondsSinceEpoch.toString(),
+//             conversationId:
+//             responseModel.data!.conversationId ?? conversationId,
+//             content: parsedContent,
 //             role: companion.role ?? 'assistant',
 //             createdAt: companion.createdAt,
 //           );
@@ -426,20 +593,119 @@
 //           debugPrint('🤖 AI Response Added: "${aiMessage.content}"');
 //           addRoleMessageLocally(aiMessage);
 //         }
+//       } else {
+//         _removeRoleLocalMessage(tempId);
 //       }
 //     } catch (e, stack) {
-//       debugPrint('❌ Error sending message: $e');
+//       debugPrint('❌ Error sending message in sendMessageRoll: $e');
 //       debugPrint('🚨 StackTrace: $stack');
+//
+//       _removeRoleLocalMessage(tempId);
+//
+//       int? statusCode;
+//       String rawResponseText = '';
+//
+//       if (e is DioException) {
+//         statusCode = e.response?.statusCode;
+//         rawResponseText = e.response?.data?.toString() ?? '';
+//       }
+//
+//       final String fullErrorString =
+//       '${e.toString()} $rawResponseText'.toUpperCase();
+//
+//       final bool isLimitOrSubscriptionError = statusCode == 403 ||
+//           statusCode == 402 ||
+//           fullErrorString.contains('403') ||
+//           fullErrorString.contains('402') ||
+//           fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+//           fullErrorString.contains('PAYMENT_REQUIRED') ||
+//           fullErrorString.contains('SUBSCRIBE') ||
+//           fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+//           fullErrorString.contains('SOMETHING WENT WRONG');
+//
+//       if (isLimitOrSubscriptionError) {
+//         debugPrint(
+//             '🔒 [ROLEPLAY LIMIT REACHED / 403] Redirecting to Premium Screen...');
+//
+//         final BuildContext? globalContext = rootNavigatorKey.currentContext;
+//         if (globalContext != null && globalContext.mounted) {
+//           globalContext.pushNamed('premium');
+//           debugPrint('✅ Navigated to Premium screen successfully!');
+//         } else {
+//           debugPrint('⚠️ Global context null or unmounted!');
+//         }
+//       }
 //     } finally {
 //       state = state.copyWith(isSending: false);
-//       debugPrint('================ 🏁 [SEND MESSAGE ROLL ENDED] ================');
+//       debugPrint(
+//           '================ 🏁 [SEND MESSAGE ROLL ENDED] ================');
 //     }
 //   }
+//
+//
+//
+//
+//
+//   // 7️⃣ Delete Single Chat Message / Conversation by ID
+//   Future<bool> deleteChat() async {
+//     debugPrint('================ 🚀 [deleteChat STARTED] ================');
+//     try {
+//       final response = await _repository.deleteChat();
+//       final int? statusCode = response.statusCode;
+//
+//       if (statusCode == 200 || statusCode == 201) {
+//         debugPrint('✅ [deleteChat SUCCESS]');
+//         ref.read(featuresProvider.notifier).fetchConversationList();
+//         // Local state reset / clean up
+//         state = state.copyWith(
+//           chatInit: const AsyncValue.data(null),
+//         );
+//         return true;
+//       }
+//       return false;
+//     } catch (e) {
+//       debugPrint('❌ [deleteChat ERROR]: $e');
+//       return false;
+//     }
+//   }
+//
+// // 8️⃣ Delete All Chats by Entity & ChatType (e.g. CHARACTER, ROLEPLAY, COMPANION)
+//   Future<bool> deleteAllChatByEntity({
+//     required String entityId,
+//     required String chatType,
+//   }) async {
+//     debugPrint('================ 🚀 [deleteAllChatByEntity STARTED] ================');
+//     try {
+//       final response = await _repository.deleteChatAll(
+//         entityId: entityId,
+//         chatType: chatType,
+//       );
+//
+//       final int? statusCode = response.statusCode;
+//
+//       if (statusCode == 200 || statusCode == 201) {
+//         debugPrint('✅ [deleteAllChatByEntity SUCCESS]');
+//         ref.read(featuresProvider.notifier).fetchConversationList();
+//         // Clear corresponding local UI state
+//         if (chatType.toUpperCase() == 'ROLEPLAY') {
+//           state = state.copyWith(roleChatInit: const AsyncValue.data(null));
+//         } else {
+//           state = state.copyWith(chatInit: const AsyncValue.data(null));
+//         }
+//         return true;
+//       }
+//       return false;
+//     } catch (e) {
+//       debugPrint('❌ [deleteAllChatByEntity ERROR]: $e');
+//       return false;
+//     }
+//   }
+//
 // }
 
 
-
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -448,35 +714,38 @@ import 'package:infinity_love/features/chat/model/chat_init_model.dart';
 import 'package:infinity_love/features/chat/model/chat_init_role_model.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../routes/app_routes.dart';
+import '../../home/provider/features_provider.dart';
 import '../../home/state/features_state.dart';
 import '../model/massage_model.dart';
 import '../repo/chat_repo.dart';
 
 final chatNotifierProvider =
 StateNotifierProvider<ChatNotifier, FeaturesState>((ref) {
-  return ChatNotifier(sl<ChatRepository>());
+  return ChatNotifier(sl<ChatRepository>(), ref);
 });
 
 class ChatNotifier extends StateNotifier<FeaturesState> {
   final ChatRepository _repository;
+  final Ref _ref;
 
-  ChatNotifier(this._repository) : super(const FeaturesState());
+  ChatNotifier(this._repository, this._ref) : super(const FeaturesState());
 
   // 1️⃣ Simple Chat Initial Fetch
-  Future<void> fetchChatList(dynamic sId, {String? imageUrl}) async {
+  Future<void> fetchChatList(dynamic sId, dynamic name,
+      {String? imageUrl}) async {
     debugPrint('================ 🚀 [fetchChatList STARTED] ================');
     state = state.copyWith(chatInit: const AsyncValue.loading());
 
     try {
       final response = await _repository.chatInit(sId.toString());
 
-      // 1️⃣ State data me store karein
       state = state.copyWith(chatInit: AsyncValue.data(response));
       debugPrint('✅ [fetchChatList SUCCESS]');
 
-      // 2️⃣ 🟢 200 ya 201 Success Response Check & Navigation
-      if (response != null && (response.success == true || response.data != null)) {
-        debugPrint('🔀 [SUCCESS 200/201] Navigating to chatScreen via Global Key...');
+      if (response != null &&
+          (response.success == true || response.data != null)) {
+        debugPrint(
+            '🔀 [SUCCESS 200/201] Navigating to chatScreen via Global Key...');
 
         final BuildContext? globalContext = rootNavigatorKey.currentContext;
 
@@ -485,7 +754,8 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
             'chatScreen',
             extra: {
               'sId': sId.toString(),
-              'image': imageUrl ?? '', // Dynamic Image URL pass
+              'image': imageUrl ?? '',
+              'name': name,
             },
           );
           debugPrint('🎉 Navigation to chatScreen completed successfully!');
@@ -504,20 +774,24 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
           errText.contains('SOMETHING WENT WRONG');
 
       if (is402) {
-        debugPrint('🔒 402 Payment Required match found! Global Key Redirecting...');
-
-        // 🟢 402 Redirection to Premium Screen
+        debugPrint(
+            '🔒 402 Payment Required match found! Global Key Redirecting...');
         rootNavigatorKey.currentContext?.pushNamed('premium');
       }
     }
   }
 
   // Fetch Companion Chat List
-  Future<void> fetchChatListCompanion(dynamic sId, {BuildContext? context}) async {
+  Future<void> fetchChatListCompanion(dynamic sId,
+      {BuildContext? context}) async {
     state = state.copyWith(chatInit: const AsyncValue.loading());
     try {
-      final response = await _repository.chatInitCreated(sId.toString());
-      state = state.copyWith(chatInit: AsyncValue.data(response));
+      final response3 = await _repository.chatInitCreated(sId.toString());
+
+      // 🟢 Fail-safe conversion via Json
+      final mappedResponse = ChatInitModel.fromJson(response3.toJson());
+
+      state = state.copyWith(chatInit: AsyncValue.data(mappedResponse));
     } catch (e, stack) {
       state = state.copyWith(chatInit: AsyncValue.error(e, stack));
 
@@ -533,28 +807,24 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
   }
 
   // 2️⃣ RolePlay Chat Initial Fetch
-  Future<void> fetchChatListRole(dynamic sId, {String? imageUrl, BuildContext? context}) async {
-    debugPrint('================ 🚀 [fetchChatListRole STARTED] ================');
+  Future<void> fetchChatListRole(dynamic sId,
+      {String? imageUrl, BuildContext? context}) async {
+    debugPrint(
+        '================ 🚀 [fetchChatListRole STARTED] ================');
     state = state.copyWith(roleChatInit: const AsyncValue.loading());
 
     try {
       final response = await _repository.chatInitRole(sId.toString());
 
-      // 1️⃣ Content parsing
       if (response.data?.messages != null) {
         for (final msg in response.data!.messages!) {
           msg.content = _extractReplyText(msg.content);
         }
       }
 
-      // 2️⃣ State update
       state = state.copyWith(roleChatInit: AsyncValue.data(response));
 
-
-      // 3️⃣ 🟢 200/201 Success Response Navigation to chatScreen2
       if (response.success == true || response.data != null) {
-
-
         final BuildContext? globalContext = rootNavigatorKey.currentContext;
 
         if (globalContext != null && globalContext.mounted) {
@@ -581,14 +851,12 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
           errText.contains('SOMETHING WENT WRONG');
 
       if (is402) {
-        debugPrint('🔒 402 Payment Required match found! Global Key Redirecting...');
-
-        // 🟢 402 Redirection via Global Key Context
+        debugPrint(
+            '🔒 402 Payment Required match found! Global Key Redirecting...');
         rootNavigatorKey.currentContext?.pushNamed('premium');
       }
     }
   }
-
 
   void addMessageLocally(Messages newMessage) {
     state.chatInit.whenData((chatData) {
@@ -607,6 +875,21 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
         state = state.copyWith(
           chatInit: AsyncValue.data(chatData),
         );
+      }
+    });
+  }
+
+  // 🟢 Helper to remove temp simple message if API fails
+  void _removeLocalMessage(String tempId) {
+    state.chatInit.whenData((chatData) {
+      if (chatData?.data?.messages != null) {
+        final updatedList =
+        chatData!.data!.messages!.where((m) => m.sId != tempId).toList();
+        chatData.data!.messages = updatedList;
+        state = state.copyWith(
+          chatInit: AsyncValue.data(chatData),
+        );
+        debugPrint('🗑️ Removed temp message ($tempId) from simple chat UI');
       }
     });
   }
@@ -742,7 +1025,11 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
     required String conversationId,
     required String messageText,
   }) async {
-    final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    debugPrint('================ 🚀 [sendMessage STARTED] ================');
+
+    if (messageText.trim().isEmpty) return;
+
+    final String tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
     final userMessage = Messages(
       sId: tempId,
       conversationId: conversationId,
@@ -750,8 +1037,9 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
       role: 'user',
       createdAt: DateTime.now().toIso8601String(),
     );
-    addMessageLocally(userMessage);
 
+    // 1️⃣ Local Update
+    addMessageLocally(userMessage);
     state = state.copyWith(isSending: true);
 
     final Map<String, dynamic> requestData = {
@@ -763,8 +1051,16 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
     try {
       final response = await _repository.sendMsg(requestData);
 
-      if (response != null && response['success'] == true) {
-        final companionData = response['data']?['companionMessage'];
+      final int? statusCode = response is Response
+          ? response.statusCode
+          : (response?['statusCode'] ?? 200);
+      final dynamic responseData =
+      response is Response ? response.data : response;
+
+      if ((statusCode == 200 || statusCode == 201) &&
+          responseData != null &&
+          responseData['success'] == true) {
+        final companionData = responseData['data']?['companionMessage'];
 
         if (companionData != null) {
           final aiMessage = Messages(
@@ -772,19 +1068,64 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
                 companionData['_id'] ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
             conversationId:
-            response['data']?['conversationId'] ?? conversationId,
+            responseData['data']?['conversationId'] ?? conversationId,
             content: _extractReplyText(companionData['content']?.toString()),
             role: companionData['role'] ?? 'assistant',
-            createdAt: companionData['createdAt'],
+            createdAt: companionData['createdAt'] ??
+                DateTime.now().toIso8601String(),
           );
 
           addMessageLocally(aiMessage);
         }
+      } else {
+        _removeLocalMessage(tempId);
       }
-    } catch (e) {
-      debugPrint("Error sending message: $e");
+    } catch (e, stack) {
+      debugPrint('❌ Exception Caught in sendMessage: $e');
+      _removeLocalMessage(tempId);
+
+      int? statusCode;
+      String rawResponseText = '';
+
+      if (e is DioException) {
+        statusCode = e.response?.statusCode;
+        rawResponseText = e.response?.data?.toString() ?? '';
+      }
+
+      final String fullErrorString =
+      '${e.toString()} $rawResponseText'.toUpperCase();
+
+      debugPrint('🔍 Extracted StatusCode: $statusCode');
+      debugPrint('📄 Full Error Text: $fullErrorString');
+
+      final bool isLimitOrSubscriptionError = statusCode == 403 ||
+          statusCode == 402 ||
+          fullErrorString.contains('403') ||
+          fullErrorString.contains('402') ||
+          fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+          fullErrorString.contains('PAYMENT_REQUIRED') ||
+          fullErrorString.contains('SUBSCRIBE') ||
+          fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+          fullErrorString.contains('SOMETHING WENT WRONG') ||
+          fullErrorString.contains('LIMIT');
+
+      if (isLimitOrSubscriptionError) {
+        debugPrint(
+            '🔒 [LIMIT REACHED / 403 DETECTED] Redirecting to Subscription Screen...');
+
+        final BuildContext? globalContext = rootNavigatorKey.currentContext;
+        if (globalContext != null && globalContext.mounted) {
+          globalContext.pushNamed('premium');
+          debugPrint('✅ Navigated to Premium screen successfully!');
+        } else {
+          debugPrint('⚠️ Global context null or unmounted!');
+        }
+      } else {
+        debugPrint('ℹ️ Generic error (Not a subscription or limit error).');
+      }
     } finally {
       state = state.copyWith(isSending: false);
+      debugPrint('================ 🏁 [sendMessage FINISHED] ================');
     }
   }
 
@@ -818,8 +1159,16 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
     try {
       final response = await _repository.sendMsgCreated(requestData);
 
-      if (response != null && response['success'] == true) {
-        final companionData = response['data']?['companionMessage'];
+      final int? statusCode = response is Response
+          ? response.statusCode
+          : (response?['statusCode'] ?? 200);
+      final dynamic responseData =
+      response is Response ? response.data : response;
+
+      if ((statusCode == 200 || statusCode == 201) &&
+          responseData != null &&
+          responseData['success'] == true) {
+        final companionData = responseData['data']?['companionMessage'];
 
         if (companionData != null) {
           final aiMessage = Messages(
@@ -827,11 +1176,11 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
                 companionData['_id'] ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
             conversationId:
-            response['data']?['conversationId'] ?? conversationId,
+            responseData['data']?['conversationId'] ?? conversationId,
             content: _extractReplyText(companionData['content']?.toString()),
             role: companionData['role'] ?? 'assistant',
-            createdAt:
-            companionData['createdAt'] ?? DateTime.now().toIso8601String(),
+            createdAt: companionData['createdAt'] ??
+                DateTime.now().toIso8601String(),
           );
 
           addMessageLocally(aiMessage);
@@ -842,22 +1191,56 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
     } catch (e) {
       debugPrint("❌ Error sending companion message: $e");
       _removeLocalMessage(tempId);
+
+      int? statusCode;
+      String rawResponseText = '';
+
+      if (e is DioException) {
+        statusCode = e.response?.statusCode;
+        rawResponseText = e.response?.data?.toString() ?? '';
+      }
+
+      final String fullErrorString =
+      '${e.toString()} $rawResponseText'.toUpperCase();
+
+      final bool isLimitOrSubscriptionError = statusCode == 403 ||
+          statusCode == 402 ||
+          fullErrorString.contains('403') ||
+          fullErrorString.contains('402') ||
+          fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+          fullErrorString.contains('PAYMENT_REQUIRED') ||
+          fullErrorString.contains('SUBSCRIBE') ||
+          fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+          fullErrorString.contains('SOMETHING WENT WRONG');
+
+      if (isLimitOrSubscriptionError) {
+        debugPrint(
+            '🔒 [LIMIT REACHED / 403] Redirecting Companion Chat to Premium Screen...');
+
+        final BuildContext? globalContext = rootNavigatorKey.currentContext;
+        if (globalContext != null && globalContext.mounted) {
+          globalContext.pushNamed('premium');
+          debugPrint('✅ Navigated to Premium screen successfully!');
+        } else {
+          debugPrint('⚠️ Global context null or unmounted!');
+        }
+      }
     } finally {
       state = state.copyWith(isSending: false);
     }
   }
 
-  // Helper to remove temp message if API fails
-  void _removeLocalMessage(String tempId) {
-    state.chatInit.whenData((chatData) {
-      if (chatData?.data?.messages != null) {
-        final updatedList = chatData!.data!.messages!
-            .where((m) => m.sId != tempId)
-            .toList();
-        chatData.data!.messages = updatedList;
+  // 🟢 Helper method: API failure ke case me temporary message local list se hatane ke liye
+  void _removeRoleLocalMessage(String tempId) {
+    state.roleChatInit.whenData((roleData) {
+      if (roleData?.data?.messages != null) {
+        final updatedList =
+        roleData!.data!.messages!.where((m) => m.sId != tempId).toList();
+        roleData.data!.messages = updatedList;
         state = state.copyWith(
-          chatInit: AsyncValue.data(chatData),
+          roleChatInit: AsyncValue.data(roleData),
         );
+        debugPrint('🗑️ Removed temp message with ID: $tempId from UI state');
       }
     });
   }
@@ -869,8 +1252,12 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
     required String sessionId,
     required String messageText,
   }) async {
-    debugPrint('================ 🚀 [SEND MESSAGE ROLL STARTED] ================');
-    final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    debugPrint(
+        '================ 🚀 [SEND MESSAGE ROLL STARTED] ================');
+
+    if (messageText.trim().isEmpty) return;
+
+    final String tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
 
     final userMessage = Messages(
       sId: tempId,
@@ -880,6 +1267,7 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
       createdAt: DateTime.now().toIso8601String(),
     );
 
+    // 1️⃣ Optimistic Local Update
     addRoleMessageLocally(userMessage);
     state = state.copyWith(isSending: true);
 
@@ -901,7 +1289,8 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
           final String parsedContent = _extractReplyText(companion.content);
 
           final aiMessage = Messages(
-            sId: companion.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            sId: companion.id ??
+                DateTime.now().millisecondsSinceEpoch.toString(),
             conversationId:
             responseModel.data!.conversationId ?? conversationId,
             content: parsedContent,
@@ -912,13 +1301,108 @@ class ChatNotifier extends StateNotifier<FeaturesState> {
           debugPrint('🤖 AI Response Added: "${aiMessage.content}"');
           addRoleMessageLocally(aiMessage);
         }
+      } else {
+        _removeRoleLocalMessage(tempId);
       }
     } catch (e, stack) {
-      debugPrint('❌ Error sending message: $e');
+      debugPrint('❌ Error sending message in sendMessageRoll: $e');
       debugPrint('🚨 StackTrace: $stack');
+
+      _removeRoleLocalMessage(tempId);
+
+      int? statusCode;
+      String rawResponseText = '';
+
+      if (e is DioException) {
+        statusCode = e.response?.statusCode;
+        rawResponseText = e.response?.data?.toString() ?? '';
+      }
+
+      final String fullErrorString =
+      '${e.toString()} $rawResponseText'.toUpperCase();
+
+      final bool isLimitOrSubscriptionError = statusCode == 403 ||
+          statusCode == 402 ||
+          fullErrorString.contains('403') ||
+          fullErrorString.contains('402') ||
+          fullErrorString.contains('DAILY_LIMIT_REACHED') ||
+          fullErrorString.contains('PAYMENT_REQUIRED') ||
+          fullErrorString.contains('SUBSCRIBE') ||
+          fullErrorString.contains('SUBSCRIPTION_REQUIRED_403') ||
+          fullErrorString.contains('SOMETHING WENT WRONG');
+
+      if (isLimitOrSubscriptionError) {
+        debugPrint(
+            '🔒 [ROLEPLAY LIMIT REACHED / 403] Redirecting to Premium Screen...');
+
+        final BuildContext? globalContext = rootNavigatorKey.currentContext;
+        if (globalContext != null && globalContext.mounted) {
+          globalContext.pushNamed('premium');
+          debugPrint('✅ Navigated to Premium screen successfully!');
+        } else {
+          debugPrint('⚠️ Global context null or unmounted!');
+        }
+      }
     } finally {
       state = state.copyWith(isSending: false);
-      debugPrint('================ 🏁 [SEND MESSAGE ROLL ENDED] ================');
+      debugPrint(
+          '================ 🏁 [SEND MESSAGE ROLL ENDED] ================');
+    }
+  }
+
+  // 7️⃣ Delete Single Chat Message / Conversation by ID
+  Future<bool> deleteChat() async {
+    debugPrint('================ 🚀 [deleteChat STARTED] ================');
+    try {
+      final response = await _repository.deleteChat();
+      final int? statusCode = response.statusCode;
+
+      if (statusCode == 200 || statusCode == 201) {
+        debugPrint('✅ [deleteChat SUCCESS]');
+        _ref.read(featuresProvider.notifier).fetchConversationList();
+        // Local state reset / clean up
+        state = state.copyWith(
+          chatInit: const AsyncValue.data(null),
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('❌ [deleteChat ERROR]: $e');
+      return false;
+    }
+  }
+
+  // 8️⃣ Delete All Chats by Entity & ChatType (e.g. CHARACTER, ROLEPLAY, COMPANION)
+  Future<bool> deleteAllChatByEntity({
+    required String entityId,
+    required String chatType,
+  }) async {
+    debugPrint(
+        '================ 🚀 [deleteAllChatByEntity STARTED] ================');
+    try {
+      final response = await _repository.deleteChatAll(
+        entityId: entityId,
+        chatType: chatType,
+      );
+
+      final int? statusCode = response.statusCode;
+
+      if (statusCode == 200 || statusCode == 201) {
+        debugPrint('✅ [deleteAllChatByEntity SUCCESS]');
+        _ref.read(featuresProvider.notifier).fetchConversationList();
+        // Clear corresponding local UI state
+        if (chatType.toUpperCase() == 'ROLEPLAY') {
+          state = state.copyWith(roleChatInit: const AsyncValue.data(null));
+        } else {
+          state = state.copyWith(chatInit: const AsyncValue.data(null));
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('❌ [deleteAllChatByEntity ERROR]: $e');
+      return false;
     }
   }
 }

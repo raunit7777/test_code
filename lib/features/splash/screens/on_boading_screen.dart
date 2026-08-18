@@ -2,10 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:infinity_love/core/constants/app_color.dart';
 import 'package:infinity_love/features/auth/login_screen.dart';
-import 'package:infinity_love/features/splash/screens/select_language_screen.dart';
 
 import '../../../core/constants/const_text.dart';
-
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -50,22 +48,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _startSlowAutoScroll() {
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!_gridScrollController.hasClients) return;
+    _autoScrollTimer =
+        Timer.periodic(const Duration(milliseconds: 50), (timer) {
+          if (!_gridScrollController.hasClients) return;
 
-      final maxScroll = _gridScrollController.position.maxScrollExtent;
-      final currentScroll = _gridScrollController.offset;
+          final maxScroll = _gridScrollController.position.maxScrollExtent;
+          final currentScroll = _gridScrollController.offset;
 
-      if (currentScroll >= maxScroll) {
-        _gridScrollController.jumpTo(0);
-      } else {
-        _gridScrollController.animateTo(
-          currentScroll + 0.8,
-          duration: const Duration(milliseconds: 50),
-          curve: Curves.linear,
-        );
-      }
-    });
+          if (currentScroll >= maxScroll) {
+            _gridScrollController.jumpTo(0);
+          } else {
+            _gridScrollController.animateTo(
+              currentScroll + 0.8,
+              duration: const Duration(milliseconds: 50),
+              curve: Curves.linear,
+            );
+          }
+        });
   }
 
   @override
@@ -86,7 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const ChooseLanguageScreen(),
+          builder: (context) => const LoginScreen(),
         ),
       );
     }
@@ -94,6 +93,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+    final double screenWidth = size.width;
+    final double screenHeight = size.height;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -112,18 +115,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     });
                   },
                   children: [
-                    _buildPage1(),
-                    _buildPage2(),
-                    _buildPage3(),
+                    _buildPage1(screenWidth, screenHeight),
+                    _buildPage2(screenWidth, screenHeight),
+                    _buildPage3(screenWidth, screenHeight),
                   ],
                 ),
               ),
 
-              // Page 2 par dots & bottom button hide rahenge
-              if (_currentPage != 1)
+              // Page 1 Navigation Bottom Bar
+              if (_currentPage == 0)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 12.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.06,
+                    vertical: screenHeight * 0.015,
+                  ),
                   child: Column(
                     children: [
                       // Page Dots
@@ -131,20 +136,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
                           3,
-                              (index) => _buildDot(index),
+                              (index) => _buildDot(index, screenWidth),
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      SizedBox(height: screenHeight * 0.02),
 
-                      // Floating Button
+                      // Floating Arrow Button
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
                           onTap: _onNextPressed,
                           child: Container(
-                            width: 60,
-                            height: 60,
+                            width: screenWidth * 0.15,
+                            height: screenWidth * 0.15,
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: Color(0xFFFF2A7A),
@@ -157,16 +162,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ],
                             ),
                             child: Icon(
-                              _currentPage == 2
-                                  ? Icons.check
-                                  : Icons.arrow_forward,
+                              Icons.arrow_forward,
                               color: Colors.white,
-                              size: 28,
+                              size: screenWidth * 0.07,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: screenHeight * 0.01),
                     ],
                   ),
                 ),
@@ -177,17 +180,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // --- SCREEN 1: Welcome ---
-  Widget _buildPage1() {
+  // --- SCREEN 1: Welcome (MediaQuery Managed) ---
+  Widget _buildPage1(double screenWidth, double screenHeight) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
       child: Column(
         children: [
           const Spacer(flex: 2),
 
           Container(
-            width: 230,
-            height: 230,
+            width: screenWidth * 0.58,
+            height: screenWidth * 0.58,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: const Color(0xFF0B0A0F),
@@ -202,13 +205,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Center(
               child: Image.asset(
                 'assets/logo2.png',
-                width: 150,
-                height: 150,
+                width: screenWidth * 0.38,
+                height: screenWidth * 0.38,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
+                errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.favorite,
-                  color: Color(0xFFFF2A7A),
-                  size: 80,
+                  color: const Color(0xFFFF2A7A),
+                  size: screenWidth * 0.2,
                 ),
               ),
             ),
@@ -219,17 +222,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           CustomText.bold(
             'Welcome to\nInfinite love',
             textAlign: TextAlign.center,
-            fontSize: 32,
+            fontSize: screenWidth * 0.08,
             color: Colors.white,
             height: 1.25,
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: screenHeight * 0.02),
 
           CustomText.regular(
             'Your personal, insightful, and always-\navailable AI Partner.',
             textAlign: TextAlign.center,
-            fontSize: 15,
+            fontSize: screenWidth * 0.038,
             color: Colors.white.withValues(alpha: 0.6),
             height: 1.4,
           ),
@@ -240,9 +243,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // --- SCREEN 2: Meet Partners (Grid View) ---
-  Widget _buildPage2() {
-    // Sirf aapki 4 available images ki list
+  // --- SCREEN 2: Meet Partners Grid (MediaQuery Managed) ---
+  Widget _buildPage2(double screenWidth, double screenHeight) {
     final List<String> partnerImages = [
       'assets/21.png',
       'assets/22.png',
@@ -252,44 +254,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Column(
       children: [
-        const SizedBox(height: 8),
+        SizedBox(height: screenHeight * 0.01),
 
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
             child: GridView.builder(
               controller: _gridScrollController,
               padding: EdgeInsets.zero,
               physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+                crossAxisSpacing: screenWidth * 0.02,
+                mainAxisSpacing: screenHeight * 0.01,
                 childAspectRatio: 0.78,
               ),
-              itemCount: 30, // Saari 30 tiles inn 4 images me repeat/cycle hongi
+              itemCount: 30,
               itemBuilder: (context, index) {
-                final String imagePath = partnerImages[index % partnerImages.length];
+                final String imagePath =
+                partnerImages[index % partnerImages.length];
 
                 return Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(screenWidth * 0.035),
                     border: Border.all(
                       color: AppColors.textPrimaryLight.withOpacity(0.08),
                       width: 1,
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(screenWidth * 0.032),
                     child: Image.asset(
                       imagePath,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: AppColors.cardDarkBg,
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           color: AppColors.textSecondaryDark,
-                          size: 26,
+                          size: screenWidth * 0.065,
                         ),
                       ),
                     ),
@@ -303,11 +306,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Bottom Banner Container
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.all(12),
-          padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
+          margin: EdgeInsets.all(screenWidth * 0.03),
+          padding: EdgeInsets.all(screenWidth * 0.045),
           decoration: BoxDecoration(
             color: AppColors.profileCardBg,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(screenWidth * 0.06),
             border: Border.all(
               color: AppColors.textPrimaryLight.withOpacity(0.05),
             ),
@@ -319,31 +322,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-                  children:  [
+                  children: [
                     CustomText.bold(
                       'Meet Your AI Partners',
                       color: AppColors.primaryPink,
-                      fontSize: 22,
+                      fontSize: screenWidth * 0.052,
                       letterSpacing: -0.3,
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: screenHeight * 0.008),
                     CustomText.regular(
                       'Discover unique personalities ready to connect with you. Each AI partner has its own distinct personality and expertise.',
                       color: AppColors.textSecondaryLight,
-                      fontSize: 13.5,
+                      fontSize: screenWidth * 0.033,
                       height: 1.4,
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(width: 12),
+              SizedBox(width: screenWidth * 0.03),
 
               GestureDetector(
                 onTap: _onNextPressed,
                 child: Container(
-                  width: 54,
-                  height: 54,
+                  width: screenWidth * 0.13,
+                  height: screenWidth * 0.13,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.primaryPink,
@@ -355,10 +358,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_forward,
                     color: AppColors.whiteSheetBg,
-                    size: 26,
+                    size: screenWidth * 0.065,
                   ),
                 ),
               ),
@@ -369,65 +372,75 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // --- SCREEN 3: Features ---
-  Widget _buildPage3() {
+  // --- SCREEN 3: Features (MediaQuery Managed) ---
+  Widget _buildPage3(double screenWidth, double screenHeight) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.06,
+        vertical: screenHeight * 0.02,
+      ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
+          SizedBox(height: screenHeight * 0.01),
           CustomText.bold(
             'Explore Amazing\nFeatures',
             textAlign: TextAlign.center,
-            fontSize: 28,
+            fontSize: screenWidth * 0.07,
             color: const Color(0xFFFF2A7A),
             height: 1.2,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: screenHeight * 0.03),
 
-          ..._features.map((item) => _buildFeatureCard(item)),
+          ..._features.map((item) =>
+              _buildFeatureCard(item, screenWidth, screenHeight)),
 
           const Spacer(),
 
+          // Single Main "Start Your Journey" Button
           SizedBox(
             width: double.infinity,
-            height: 54,
+            height: screenHeight * 0.065,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>  LoginScreen(),
+                    builder: (context) => const LoginScreen(),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF2A7A),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.04),
                 ),
                 elevation: 4,
               ),
               child: CustomText.bold(
                 'Start Your Journey',
-                fontSize: 18,
+                fontSize: screenWidth * 0.045,
                 color: Colors.white,
               ),
             ),
           ),
+          SizedBox(height: screenHeight * 0.01),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(Map<String, dynamic> feature) {
+  Widget _buildFeatureCard(
+      Map<String, dynamic> feature,
+      double screenWidth,
+      double screenHeight,
+      ) {
     return Container(
-      height: 120,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
+      height: screenHeight * 0.13,
+      margin: EdgeInsets.only(bottom: screenHeight * 0.015),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: const Color(0xFF16131A),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(screenWidth * 0.04),
         border: Border.all(
           color: AppColors.accentPink,
           width: 0.5,
@@ -437,31 +450,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(screenWidth * 0.025),
             decoration: BoxDecoration(
               color: const Color(0xFFFF2A7A).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(screenWidth * 0.03),
             ),
             child: Icon(
               feature['icon'] as IconData,
               color: const Color(0xFFFF2A7A),
-              size: 24,
+              size: screenWidth * 0.06,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: screenWidth * 0.04),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CustomText.bold(
                   feature['title']!,
-                  fontSize: 16,
+                  fontSize: screenWidth * 0.04,
                   color: Colors.white,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: screenHeight * 0.005),
                 CustomText.regular(
                   feature['subtitle']!,
-                  fontSize: 13,
+                  fontSize: screenWidth * 0.032,
                   color: Colors.white.withValues(alpha: 0.5),
                   height: 1.3,
                 ),
@@ -473,18 +486,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildDot(int index) {
+  Widget _buildDot(int index, double screenWidth) {
     bool isActive = _currentPage == index;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 18 : 8,
-      height: 8,
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+      width: isActive ? screenWidth * 0.045 : screenWidth * 0.02,
+      height: screenWidth * 0.02,
       decoration: BoxDecoration(
         color: isActive
             ? const Color(0xFFFF2A7A)
             : Colors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(screenWidth * 0.01),
       ),
     );
   }

@@ -1,4 +1,4 @@
-package com.fc.infinity_love.infinity_love
+package com.fc.infinity_loved
 
 import io.flutter.embedding.android.FlutterActivity
 

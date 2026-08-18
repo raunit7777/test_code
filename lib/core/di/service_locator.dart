@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:infinity_love/features/streak/repo/streak_repo.dart';
 
+import '../../features/alarm/repo/alram_repo.dart';
 import '../../features/auth/reposiotory/auth_repo.dart';
 import '../../features/chat/repo/chat_repo.dart';
+import '../../features/custmization/repo/customize_repo.dart';
 import '../../features/describe_image/repo/subcription_model.dart';
 import '../../features/home/home_repo/featuers_repo.dart';
 import '../../features/profile/profile_repo/profile_repo.dart';
@@ -61,8 +64,17 @@ Future<void> init() async {
     if (!sl.isRegistered<ChatRepository>()) {
       sl.registerLazySingleton<ChatRepository>(() => ChatRepository(sl<ApiClient>()));
     }
+    if (!sl.isRegistered<StreakRepository>()) {
+      sl.registerLazySingleton<StreakRepository>(() => StreakRepository(sl<ApiClient>()));
+    }
 
 
+    if (!sl.isRegistered<CustomizeRepository>()) {
+      sl.registerLazySingleton<CustomizeRepository>(() => CustomizeRepository(sl<ApiClient>()));
+    }
+    if (!sl.isRegistered<AlarmRepository>()) {
+      sl.registerLazySingleton<AlarmRepository>(() => AlarmRepository(sl<ApiClient>()));
+    }
     sl.registerLazySingleton<SubcriptionRepository>(
           () => SubcriptionRepository(sl<ApiClient>()),
     );

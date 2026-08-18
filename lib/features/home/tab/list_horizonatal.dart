@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,8 +64,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen2> {
             Expanded(
               child: profileState.conversationList.when(
                 // 1️⃣ Loading State
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: pinkAccent),
+                loading: () =>  Center(
+                  child: CupertinoActivityIndicator(color: pinkAccent),
                 ),
 
                 // 2️⃣ Error State

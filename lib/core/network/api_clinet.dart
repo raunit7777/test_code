@@ -432,6 +432,16 @@ import 'package:go_router/go_router.dart';
 
 
 
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
+
+// Import your custom exceptions and local storage / Service Locator references
+// import '../../core/di/service_locator.dart';
+// import '../../core/network/app_exception.dart';
+// import '../../core/storage/local_storage.dart';
+// import '../../routes/app_routes.dart'; // rootNavigatorKey
+
 class ApiClient {
   final Dio _dio;
 
@@ -439,7 +449,6 @@ class ApiClient {
     _dio.interceptors.add(
       QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
-          // 🟢 FIX: Requests me Access Token (getToken) jana chahiye, Refresh Token nahi!
           final token = LocalStorage.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -472,7 +481,6 @@ class ApiClient {
               debugPrint("🔄 [401 Interceptor] Retrying with Refresh Token: $refreshToken");
 
               if (refreshToken != null && refreshToken.isNotEmpty) {
-                // 🚀 Direct AuthRepository refresh call
                 final responseData = await sl<AuthRepository>().refresh({
                   "refreshToken": refreshToken,
                 });
@@ -490,14 +498,12 @@ class ApiClient {
 
                   debugPrint("✅ [Refresh Success] Saving New Access Token: $newAccessToken");
 
-                  // Save New Tokens
                   await LocalStorage.saveAuthData(
                     token: newAccessToken,
                     refreshToken: newRefreshToken,
                     userId: userId,
                   );
 
-                  // Update Header in Failed Request & Retry Original API
                   e.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
                   debugPrint("🔁 [401 Interceptor] Retrying original API: ${e.requestOptions.path}");
 
@@ -523,6 +529,7 @@ class ApiClient {
       ),
     );
   }
+
   Future<void> _logoutAndNavigateToLogin() async {
     await LocalStorage.clear();
     final context = rootNavigatorKey.currentContext;
@@ -530,6 +537,7 @@ class ApiClient {
       context.goNamed('login');
     }
   }
+
   Future<Response> get(
       String path, {
         Map<String, dynamic>? queryParameters,
@@ -579,6 +587,28 @@ class ApiClient {
       }) async {
     try {
       final response = await _dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken,
+      );
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // 🟢 ADDED: PATCH Method
+  Future<Response> patch(
+      String path, {
+        dynamic data,
+        Map<String, dynamic>? queryParameters,
+        Options? options,
+        CancelToken? cancelToken,
+      }) async {
+    try {
+      final response = await _dio.patch(
         path,
         data: data,
         queryParameters: queryParameters,

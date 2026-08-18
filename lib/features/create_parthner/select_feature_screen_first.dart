@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -21,7 +22,6 @@ class _CreatePartnerFormScreenState
     extends ConsumerState<CreatePartnerFormScreen> {
   late TextEditingController _nameController;
 
-  // Cloudinary Details
   static const String _cloudName = "bky3dbdc";
   static const String _uploadPreset = "userCompanionImage";
 
@@ -67,7 +67,6 @@ class _CreatePartnerFormScreenState
     super.dispose();
   }
 
-// ☁️ Cloudinary Upload Functionality
   Future<String?> _uploadToCloudinary(File file) async {
     setState(() => _isUploading = true);
 
@@ -84,7 +83,6 @@ class _CreatePartnerFormScreenState
         final jsonResponse = jsonDecode(responseData);
         return jsonResponse['secure_url'];
       } else {
-        // 🔴 Detailed Error Print
         debugPrint("Cloudinary Error ${response.statusCode}: $responseData");
         return null;
       }
@@ -98,7 +96,6 @@ class _CreatePartnerFormScreenState
     }
   }
 
-  // 📸 Image Pick Functionality
   Future<void> _pickImage() async {
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -118,7 +115,6 @@ class _CreatePartnerFormScreenState
           _uploadedImageUrl = url;
         });
 
-        // 🟢 Provider Sync immediately after upload
         ref.read(createPartnerProvider.notifier).updateBasicDetails(
           imagePath: url,
           image: url,
@@ -152,7 +148,6 @@ class _CreatePartnerFormScreenState
 
     final String finalImageUrl = _uploadedImageUrl ?? '';
 
-    // 🟢 Save image URL and all details in Riverpod Provider
     ref.read(createPartnerProvider.notifier).updateBasicDetails(
       name: _nameController.text.trim(),
       relationship: _selectedRelationship.toLowerCase(),
@@ -231,8 +226,6 @@ class _CreatePartnerFormScreenState
                 color: AppColors.textSecondaryLight,
               ),
               const SizedBox(height: 24),
-
-              // Profile Avatar with Dynamic Image & Loader
               Center(
                 child: Stack(
                   children: [
@@ -251,7 +244,7 @@ class _CreatePartnerFormScreenState
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.4),
+                            color: AppColors.primaryPink.withValues(alpha: 0.4),
                             blurRadius: 35,
                             spreadRadius: 2,
                           ),
@@ -289,8 +282,8 @@ class _CreatePartnerFormScreenState
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
-                            child: CircularProgressIndicator(
+                          child:  Center(
+                            child: CupertinoActivityIndicator(
                               color: AppColors.primaryPink,
                             ),
                           ),
@@ -325,9 +318,7 @@ class _CreatePartnerFormScreenState
                   ],
                 ),
               ),
-
               const SizedBox(height: 32),
-
               CustomText.bold(
                 'Her Name',
                 fontSize: 16,
@@ -369,16 +360,13 @@ class _CreatePartnerFormScreenState
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
-
               CustomText.bold(
                 'Your Relationship',
                 fontSize: 16,
                 color: AppColors.textPrimaryLight,
               ),
               const SizedBox(height: 14),
-
               Wrap(
                 spacing: 10,
                 runSpacing: 12,
@@ -403,7 +391,7 @@ class _CreatePartnerFormScreenState
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primaryPink
-                              : Colors.white.withOpacity(0.12),
+                              : Colors.white.withValues(alpha: 0.12),
                           width: 1,
                         ),
                       ),
@@ -416,22 +404,19 @@ class _CreatePartnerFormScreenState
                           : CustomText.regular(
                         _capitalize(relation),
                         fontSize: 14,
-                        color: AppColors.textPrimaryLight.withOpacity(0.7),
+                        color: AppColors.textPrimaryLight.withValues(alpha: 0.7),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-
               const SizedBox(height: 28),
-
               CustomText.bold(
                 'Her Age: ${_selectedAge.round()}',
                 fontSize: 16,
                 color: AppColors.textPrimaryLight,
               ),
               const SizedBox(height: 12),
-
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
                 decoration: BoxDecoration(
@@ -446,7 +431,7 @@ class _CreatePartnerFormScreenState
                         activeTrackColor: AppColors.primaryPink,
                         inactiveTrackColor: Colors.white24,
                         thumbColor: Colors.white,
-                        overlayColor: AppColors.primaryPink.withOpacity(0.2),
+                        overlayColor: AppColors.primaryPink.withValues(alpha: 0.2),
                         thumbShape: const RoundSliderThumbShape(
                           enabledThumbRadius: 10,
                           elevation: 4,
@@ -464,7 +449,6 @@ class _CreatePartnerFormScreenState
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
             ],
           ),
