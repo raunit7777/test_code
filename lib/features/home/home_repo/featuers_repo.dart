@@ -4,6 +4,7 @@ import '../../../core/network/api_clinet.dart'; // File path check kar lein (api
 import '../../../core/network/api_endpoints.dart';
 import '../model/conversation_model.dart';
 import '../model/featurs_model.dart';
+import '../model/onboadring_model.dart';
 import '../model/profile_detail_model.dart';
 import '../model/role_play_deatails.dart';
 import '../model/role_play_model.dart';
@@ -51,6 +52,29 @@ class FeatuerRepository {
       rethrow;
     }
   }
+  Future<OnboardingModals> getOnboardingList() async {
+    debugPrint('🚀 [GET OnboardingList] Fetching from: ${ApiEndpoints.onBoardingModels}');
+
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.onBoardingModels, // Fixed: Changed from conversationList
+      );
+
+      debugPrint('📥 [GET OnboardingList] Status Code: ${response.statusCode}');
+      debugPrint('📦 [GET OnboardingList] Raw Response: ${response.data}');
+
+      final parsedModel = OnboardingModals.fromJson(response.data);
+      debugPrint('✅ [GET OnboardingList] Successfully parsed OnboardingModals');
+
+      return parsedModel;
+    } catch (error, stackTrace) {
+      debugPrint('❌ [GET OnboardingList Error]: $error');
+      debugPrint('🚨 [GET OnboardingList StackTrace]: $stackTrace');
+      rethrow;
+    }
+  }
+
+
   Future<RolePlayModel> getRolePlay() async {
     final response = await _apiClient.get(
       ApiEndpoints.roleModelList,

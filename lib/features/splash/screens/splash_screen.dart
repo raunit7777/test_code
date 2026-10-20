@@ -194,9 +194,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // 🟢 Mapping attributes safely with fallback values
       final String minVersion = '1.0.0';
       final bool forceUpdate = false;
-      final String playStoreUrl =
-          'https://play.google.com/store/apps/details?id=com.fc.infinity_loved';
-      final String appStoreUrl =
+      const String packageName = 'com.fc.infinity_loved';
+      const String playStoreUrl =
+          'https://play.google.com/store/apps/details?id=$packageName';
+      const String appStoreUrl =
           'https://apps.apple.com/app/idYOUR_APP_ID';
 
       final bool isVersionOutdated =
@@ -204,7 +205,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       if (forceUpdate || isVersionOutdated) {
         if (mounted) {
-          _showForcedUpdateDialog(playStoreUrl, appStoreUrl);
+          _showForcedUpdateDialog(playStoreUrl, appStoreUrl, packageName);
         }
         return true;
       }
@@ -232,8 +233,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return false;
   }
 
+  /// 🟢 Safe External Store Launcher
+  Future<void> _openStore(String webUrl, String packageName) async {
+    if (Platform.isAndroid) {
+      // 🟢 Try opening directly in Play Store Native App via market URI
+      final Uri marketUri = Uri.parse('market://details?id=$packageName');
+      try {
+        if (await canLaunchUrl(marketUri)) {
+          await launchUrl(
+            marketUri,
+            mode: LaunchMode.externalNonBrowserApplication,
+          );
+          return;
+        }
+      } catch (e) {
+        debugPrint("Market scheme launch failed: $e");
+      }
+    }
+
+    // 🟢 Fallback to HTTPS Web URL for iOS or if Play Store App intent fails
+    final Uri webUri = Uri.parse(webUrl);
+    if (await canLaunchUrl(webUri)) {
+      await launchUrl(
+        webUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      debugPrint("Could not launch $webUrl");
+    }
+  }
+
   /// 🟢 Non-Dismissible Forced Update Dialog
-  void _showForcedUpdateDialog(String playStoreUrl, String appStoreUrl) {
+  void _showForcedUpdateDialog(
+      String playStoreUrl, String appStoreUrl, String packageName) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -293,12 +325,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       }
                     }
 
+                    // Native launch fallback
                     final String targetUrl =
                     Platform.isAndroid ? playStoreUrl : appStoreUrl;
-                    final Uri uri = Uri.parse(targetUrl);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
+                    await _openStore(targetUrl, packageName);
                   },
                   child: const Text(
                     'Update Now',

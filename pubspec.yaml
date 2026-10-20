@@ -98,7 +98,7 @@ name: infinity_love
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+3
+version: 1.0.0+11
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -142,6 +142,8 @@ dev_dependencies:
   riverpod_generator:
   go_router: ^14.8.0
   json_annotation:
+  otp_autofill: ^4.1.0
+  shimmer:
 
 
 flutter:

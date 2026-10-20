@@ -1,10 +1,15 @@
 <!--<manifest xmlns:android="http://schemas.android.com/apk/res/android">-->
 <!--    <uses-permission android:name="android.permission.INTERNET" />-->
 <!--    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
+<!--&lt;!&ndash;    <uses-permission android:name="android.permission.RECEIVE_SMS" />&ndash;&gt;-->
+<!--&lt;!&ndash;    <uses-permission android:name="android.permission.READ_SMS" />&ndash;&gt;-->
+
 <!--    <application-->
-<!--        android:label="Infinite Love"-->
+<!--        android:label="Infinite Loved"-->
 <!--        android:name="${applicationName}"-->
-<!--        android:icon="@mipmap/ic_launcher">-->
+<!--        android:icon="@mipmap/ic_launcher"-->
+<!--        android:usesCleartextTraffic="true"> &lt;!&ndash; 🟢 FIXED: Allowed HTTP Traffic &ndash;&gt;-->
+
 <!--        <activity-->
 <!--            android:name=".MainActivity"-->
 <!--            android:exported="true"-->
@@ -19,9 +24,9 @@
 <!--                 while the Flutter UI initializes. After that, this theme continues-->
 <!--                 to determine the Window background behind the Flutter UI. &ndash;&gt;-->
 <!--            <meta-data-->
-<!--              android:name="io.flutter.embedding.android.NormalTheme"-->
-<!--              android:resource="@style/NormalTheme"-->
-<!--              />-->
+<!--                android:name="io.flutter.embedding.android.NormalTheme"-->
+<!--                android:resource="@style/NormalTheme"-->
+<!--                />-->
 <!--            <intent-filter>-->
 <!--                <action android:name="android.intent.action.MAIN"/>-->
 <!--                <category android:name="android.intent.category.LAUNCHER"/>-->
@@ -33,12 +38,25 @@
 <!--            android:name="flutterEmbedding"-->
 <!--            android:value="2" />-->
 <!--    </application>-->
-<!--    &lt;!&ndash; Required to query activities that can process text, see:-->
-<!--         https://developer.android.com/training/package-visibility and-->
-<!--         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.-->
 
-<!--         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. &ndash;&gt;-->
+<!--    &lt;!&ndash; 🟢 Package Visibility for Paytm, UPI, PhonePe, GPay App Invokes &ndash;&gt;-->
 <!--    <queries>-->
+<!--        &lt;!&ndash; Paytm App &ndash;&gt;-->
+<!--        <package android:name="net.one97.paytm" />-->
+<!--        &lt;!&ndash; PhonePe App &ndash;&gt;-->
+<!--        <package android:name="com.phonepe.app" />-->
+<!--        &lt;!&ndash; Google Pay App &ndash;&gt;-->
+<!--        <package android:name="com.google.android.apps.nbu.paisa.user" />-->
+<!--        &lt;!&ndash; BHIM UPI &ndash;&gt;-->
+<!--        <package android:name="in.org.npci.upiapp" />-->
+
+<!--        &lt;!&ndash; Standard UPI Intent query &ndash;&gt;-->
+<!--        <intent>-->
+<!--            <action android:name="android.intent.action.VIEW" />-->
+<!--            <data android:scheme="upi" />-->
+<!--        </intent>-->
+
+<!--        &lt;!&ndash; Required by Flutter ProcessTextPlugin &ndash;&gt;-->
 <!--        <intent>-->
 <!--            <action android:name="android.intent.action.PROCESS_TEXT"/>-->
 <!--            <data android:mimeType="text/plain"/>-->
@@ -46,12 +64,11 @@
 <!--    </queries>-->
 <!--</manifest>-->
 
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
+    <!--    <uses-permission android:name="android.permission.RECEIVE_SMS" />-->
+    <!--    <uses-permission android:name="android.permission.READ_SMS" />-->
 
     <application
         android:label="Infinite Loved"
@@ -88,7 +105,7 @@
             android:value="2" />
     </application>
 
-    <!-- 🟢 Package Visibility for Paytm, UPI, PhonePe, GPay App Invokes -->
+    <!-- 🟢 Package Visibility for Paytm, UPI, PhonePe, GPay, and Play Store External Invokes -->
     <queries>
         <!-- Paytm App -->
         <package android:name="net.one97.paytm" />
@@ -98,11 +115,25 @@
         <package android:name="com.google.android.apps.nbu.paisa.user" />
         <!-- BHIM UPI -->
         <package android:name="in.org.npci.upiapp" />
+        <!-- Play Store App Direct Visibility -->
+        <package android:name="com.android.vending" />
 
         <!-- Standard UPI Intent query -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
+        </intent>
+
+        <!-- 🟢 Added for Play Store Native Intent (market://) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="market" />
+        </intent>
+
+        <!-- 🟢 Added for Web Links (https://play.google.com/...) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
 
         <!-- Required by Flutter ProcessTextPlugin -->

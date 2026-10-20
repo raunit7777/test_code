@@ -20,4 +20,10 @@ class StreakRepository {
     );
     return response;
   }
+  Future<dynamic> claimedReward(dynamic id) async {
+    final response = await _apiClient.post(
+      "${ApiEndpoints.mildStone}/$id/claim", // Adjust according to your ApiEndpoints class
+    );
+    return response;
+  }
 }

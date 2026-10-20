@@ -36,6 +36,9 @@ class ApiEndpoints {
   static var availablePayment = "${verifyUrl}v1/payment/gateways";
   static var deleteChat = "${verifyUrl}v1/conversations/delete-all";
   static var deleteChatParticular = "${verifyUrl}v1/conversations";
+  static var mildStone = "${verifyUrl}v1/streaks/milestones";
+  static var relationshipType = "${verifyUrl}v1/relationship-types";
+  static var onBoardingModels = "${verifyUrl}v1/onboarding-modals";
 
 
   // static var vehicleList = "${verifyUrl}vehicle-list";

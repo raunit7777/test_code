@@ -722,6 +722,8 @@ import 'package:infinity_love/features/streak/provider/streak_provider.dart';
 
 import '../../core/constants/app_string.dart';
 import '../../core/constants/const_text.dart';
+import '../../core/constants/cont_timer.dart';
+import '../../core/constants/test.dart';
 import '../../extensions/context_extension.dart';
 import '../streak/daily_streak_screen.dart';
 import 'model/featurs_model.dart';
@@ -786,7 +788,6 @@ class _ProfilesGridScreenState extends ConsumerState<ProfilesGridScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Header Title
                   Row(
                     children: [
                       CustomText.bold(
@@ -805,6 +806,8 @@ class _ProfilesGridScreenState extends ConsumerState<ProfilesGridScreen> {
                   ),
 
                   // Coin / Flame Badge
+
+                  // Exact3DGlossyTimer(),
                   GestureDetector(
                     onTap: () async {
                       await Navigator.push(

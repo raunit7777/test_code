@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../../../core/network/api_clinet.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../model/customize_model.dart';
+import '../model/relationship_type_model.dart';
 
 class CustomizeRepository {
   final ApiClient _apiClient;
@@ -27,6 +28,35 @@ class CustomizeRepository {
 
       print('🔄 [7] Parsing Response to CustomizeModel...');
       final modelData = CustomizeModel.fromJson(response.data);
+
+      print('================ 🏁 [GET PROFILE ROLE MODEL COMPLETED] ================');
+
+      return modelData;
+    } catch (e, stackTrace) {
+      print('❌ [ERROR] Exception caught in getProfileVibeDetails(): $e');
+      print('🚨 [TRACE] Stack Trace: $stackTrace');
+      print('================ 💥 [GET PROFILE ROLE MODEL FAILED] ================');
+
+      rethrow;
+    }
+  }
+  Future<RelationshipTypeModel> getRelationShipType() async {
+
+
+    final String fullUrl = '${ApiEndpoints.relationshipType}';
+    print('👉 [2] Target Endpoint URL: $fullUrl');
+
+    try {
+      print('⌛ [3] Sending GET Request via ApiClient...');
+
+      final response = await _apiClient.get(fullUrl);
+
+      print('✅ [4] Response Received Successfully!');
+      print('📊 [5] Status Code: ${response.statusCode}');
+      print('📦 [6] Raw Response Data: ${response.data}');
+
+      print('🔄 [7] Parsing Response to CustomizeModel...');
+      final modelData = RelationshipTypeModel.fromJson(response.data);
 
       print('================ 🏁 [GET PROFILE ROLE MODEL COMPLETED] ================');
 

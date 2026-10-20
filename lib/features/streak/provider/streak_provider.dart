@@ -47,4 +47,14 @@ class StreakNotifier extends StateNotifier<StreakState> {
       return false;
     }
   }
+  Future<bool> claimReward(dynamic id) async {
+    try {
+      await _repository.claimedReward(id);
+      await fetchStreak(); // Refetch updated values from backend
+      return true;
+    } catch (e) {
+      debugPrint("Claim failed: $e");
+      return false;
+    }
+  }
 }

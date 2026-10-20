@@ -27,6 +27,18 @@ class ProfileNotifier extends StateNotifier<CustomizationState> {
       state = state.copyWith(custmizeList: AsyncValue.error(e, stack));
     }
   }
+  Future<void> fetchRealationType() async {
+    state = state.copyWith(relationshipTypeList: const AsyncValue.loading());
+    try {
+      final response = await _repository.getRelationShipType();
+
+      // 🟢 Ab relationshipTypeList me RelationshipTypeModel assing hoga
+      state = state.copyWith(relationshipTypeList: AsyncValue.data(response));
+    } catch (e, stack) {
+      state = state.copyWith(relationshipTypeList: AsyncValue.error(e, stack));
+    }
+  }
+
 
   // 2️⃣ Update Vibe Method
   Future<bool> updateProfileVibe({

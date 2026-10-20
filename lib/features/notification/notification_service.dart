@@ -530,46 +530,136 @@ class NotificationService {
     }
   }
 
+  // static void _handleDataMap(Map<String, dynamic> data, {int retryCount = 0}) async {
+  //   final String action = data['action']?.toString() ?? '';
+  //
+  //   final String conversationId = data['conversationId']?.toString() ?? '';
+  //   final String modalId = data['modalId']?.toString() ?? '';
+  //   final String modalName = data['modalName']?.toString() ?? 'Model';
+  //   final String modalImage = data['modalImage']?.toString() ?? '';
+  //
+  //   final String targetChatId = modalId.isNotEmpty ? modalId : conversationId;
+  //
+  //   debugPrint("🎯 Processing Notification Action: $action");
+  //   debugPrint("🆔 Target Conversation ID: $targetChatId");
+  //
+  //   if (action == 'open_chat' && targetChatId.isNotEmpty) {
+  //     final BuildContext? context = _navigatorKey?.currentContext;
+  //     bool apiHitSuccess = false;
+  //
+  //     if (_providerContainer != null) {
+  //       debugPrint('🚀 [API HIT] Calling fetchChatList via ProviderContainer with ID: $targetChatId');
+  //       _providerContainer!
+  //           .read(chatNotifierProvider.notifier)
+  //           .fetchChatList(
+  //         targetChatId,
+  //         modalName,
+  //         imageUrl: modalImage,
+  //       );
+  //       apiHitSuccess = true;
+  //     } else if (context != null && context.mounted) {
+  //       debugPrint('🚀 [API HIT] Calling fetchChatList via BuildContext with ID: $targetChatId');
+  //       try {
+  //         ProviderScope.containerOf(context)
+  //             .read(chatNotifierProvider.notifier)
+  //             .fetchChatList(
+  //           targetChatId,
+  //           modalName,
+  //           imageUrl: modalImage,
+  //         );
+  //         apiHitSuccess = true;
+  //       } catch (e) {
+  //         debugPrint('⚠️ Error reading ProviderScope: $e');
+  //       }
+  //     }
+  //
+  //     if (!apiHitSuccess) {
+  //       if (retryCount < 5) {
+  //         debugPrint('⌛ Context/Container not ready. Retrying in 500ms...');
+  //         await Future.delayed(const Duration(milliseconds: 500));
+  //         _handleDataMap(data, retryCount: retryCount + 1);
+  //         return;
+  //       } else {
+  //         debugPrint('❌ [ERROR] Could not hit API after 5 retries.');
+  //         return;
+  //       }
+  //     }
+  //
+  //     // 🟢 Navigation Trigger to Chat Screen
+  //     if (context != null && context.mounted) {
+  //       debugPrint('🚗 Navigating to Chat Screen...');
+  //       context.pushNamed(
+  //         'chat',
+  //         extra: {
+  //           'sId': targetChatId,
+  //           'name': modalName,
+  //           'image': modalImage,
+  //           'autoScrollToBottom': true, // Auto scroll trigger parameter
+  //         },
+  //       );
+  //     }
+  //   }
+  // }
+
+
   static void _handleDataMap(Map<String, dynamic> data, {int retryCount = 0}) async {
-    final String action = data['action']?.toString() ?? '';
+    final String action = (data['action'] ?? '').toString().toLowerCase().trim();
 
-    final String conversationId = data['conversationId']?.toString() ?? '';
-    final String modalId = data['modalId']?.toString() ?? '';
-    final String modalName = data['modalName']?.toString() ?? 'Model';
-    final String modalImage = data['modalImage']?.toString() ?? '';
+    // 🟢 Chat Type detection (companion / roleplay / default)
+    final String modalType = (data['modalType'] ?? '').toString().toLowerCase().trim();
+    final String mainType = (data['type'] ?? '').toString().toLowerCase().trim();
 
-    final String targetChatId = modalId.isNotEmpty ? modalId : conversationId;
+    final String conversationId = (data['conversationId'] ?? '').toString().trim();
+    final String modalId = (data['modalId'] ?? '').toString().trim();
 
-    debugPrint("🎯 Processing Notification Action: $action");
-    debugPrint("🆔 Target Conversation ID: $targetChatId");
+    // 🟢 Dynamic IDs extraction matching _buildChatItem
+    // entityId = modalId ?? conversationId
+    final String entityId = modalId.isNotEmpty ? modalId : conversationId;
+    // entityId2 = conversationId ?? modalId (for COMPANION)
+    final String entityId2 = conversationId.isNotEmpty ? conversationId : modalId;
 
-    if (action == 'open_chat' && targetChatId.isNotEmpty) {
+    final String rawName = (data['modalName'] ?? 'Model').toString().trim();
+    final String cleanName = rawName.replaceFirst(RegExp(r'^Chat with\s+', caseSensitive: false), '');
+    final String modalImage = (data['modalImage'] ?? '').toString().trim();
+
+    debugPrint("🎯 Action: $action | ModalType: $modalType | Type: $mainType");
+    debugPrint("🆔 EntityId: $entityId | EntityId2: $entityId2");
+
+    if (action == 'open_chat' && (entityId.isNotEmpty || entityId2.isNotEmpty)) {
       final BuildContext? context = _navigatorKey?.currentContext;
       bool apiHitSuccess = false;
 
-      if (_providerContainer != null) {
-        debugPrint('🚀 [API HIT] Calling fetchChatList via ProviderContainer with ID: $targetChatId');
-        _providerContainer!
-            .read(chatNotifierProvider.notifier)
-            .fetchChatList(
-          targetChatId,
-          modalName,
-          imageUrl: modalImage,
-        );
-        apiHitSuccess = true;
-      } else if (context != null && context.mounted) {
-        debugPrint('🚀 [API HIT] Calling fetchChatList via BuildContext with ID: $targetChatId');
+      // Riverpod Notifier Access
+      final notifier = _providerContainer?.read(chatNotifierProvider.notifier) ??
+          (context != null && context.mounted ? ProviderScope.containerOf(context).read(chatNotifierProvider.notifier) : null);
+
+      if (notifier != null) {
         try {
-          ProviderScope.containerOf(context)
-              .read(chatNotifierProvider.notifier)
-              .fetchChatList(
-            targetChatId,
-            modalName,
-            imageUrl: modalImage,
-          );
+          // 🟢 Exactly matching _buildChatItem conditions
+          if (modalType == 'roleplay' || mainType == 'roleplay') {
+            debugPrint('🚀 [API HIT] Calling fetchChatListRole for ID: $entityId');
+            await notifier.fetchChatListRole(
+              entityId,
+              imageUrl: modalImage,
+              context: context,
+            );
+          } else if (modalType == 'companion' || mainType == 'companion') {
+            debugPrint('🚀 [API HIT] Calling fetchChatListCompanion for ID: $entityId2');
+            await notifier.fetchChatListCompanion(
+              entityId2,
+              context: context,
+            );
+          } else {
+            debugPrint('🚀 [API HIT] Calling fetchChatList for ID: $entityId');
+            await notifier.fetchChatList(
+              entityId,
+              cleanName,
+              imageUrl: modalImage,
+            );
+          }
           apiHitSuccess = true;
         } catch (e) {
-          debugPrint('⚠️ Error reading ProviderScope: $e');
+          debugPrint('⚠️ API Call Error on Notification Tap: $e');
         }
       }
 
@@ -585,18 +675,43 @@ class NotificationService {
         }
       }
 
-      // 🟢 Navigation Trigger to Chat Screen
+      // 🟢 Navigation Logic matching _buildChatItem
       if (context != null && context.mounted) {
-        debugPrint('🚗 Navigating to Chat Screen...');
-        context.pushNamed(
-          'chat',
-          extra: {
-            'sId': targetChatId,
-            'name': modalName,
-            'image': modalImage,
-            'autoScrollToBottom': true, // Auto scroll trigger parameter
-          },
-        );
+        if (modalType == 'companion' || mainType == 'companion') {
+          debugPrint('🚗 Navigating to Companion Screen (chatScreen3)...');
+          context.pushNamed(
+            'chatScreen3',
+            extra: {
+              'sId': entityId2,
+              'id': entityId,
+              'image': modalImage,
+              'name': cleanName,
+              'autoScrollToBottom': true,
+            },
+          );
+        } else if (modalType == 'roleplay' || mainType == 'roleplay') {
+          debugPrint('🚗 Navigating to Roleplay Screen...');
+          context.pushNamed(
+            'roleplayChat',
+            extra: {
+              'sId': entityId,
+              'name': cleanName,
+              'image': modalImage,
+              'autoScrollToBottom': true,
+            },
+          );
+        } else {
+          debugPrint('🚗 Navigating to Default Chat Screen...');
+          context.pushNamed(
+            'chat',
+            extra: {
+              'sId': entityId,
+              'name': cleanName,
+              'image': modalImage,
+              'autoScrollToBottom': true,
+            },
+          );
+        }
       }
     }
   }

@@ -4,6 +4,7 @@ import '../../chat/model/chat_init_role_model.dart';
 import '../../chat/model/massage_model.dart';
 import '../model/conversation_model.dart';
 import '../model/featurs_model.dart';
+import '../model/onboadring_model.dart';
 import '../model/profile_detail_model.dart';
 import '../model/role_play_deatails.dart';
 import '../model/role_play_model.dart';
@@ -17,7 +18,8 @@ class FeaturesState {
   final AsyncValue<ChatInitRoleModel?> roleChatInit;
   final AsyncValue<RolePlayDetailsModel?> role;
   final AsyncValue<ConversationModel?> conversationList;
-  final AsyncValue<VibeModel?> vibeList; // 🟢 Added in constructor & copyWith
+  final AsyncValue<OnboardingModals?> onboardingList; // 🟢 Added onboardingList
+  final AsyncValue<VibeModel?> vibeList;
   final List<Messages> messages;
   final bool isSending;
 
@@ -29,7 +31,8 @@ class FeaturesState {
     this.roleChatInit = const AsyncValue.data(null),
     this.role = const AsyncValue.data(null),
     this.conversationList = const AsyncValue.data(null),
-    this.vibeList = const AsyncValue.data(null), // 🟢 Fixed: Added here
+    this.onboardingList = const AsyncValue.data(null), // 🟢 Added in constructor
+    this.vibeList = const AsyncValue.data(null),
     this.messages = const [],
     this.isSending = false,
   });
@@ -42,7 +45,8 @@ class FeaturesState {
     AsyncValue<ChatInitRoleModel?>? roleChatInit,
     AsyncValue<RolePlayDetailsModel?>? role,
     AsyncValue<ConversationModel?>? conversationList,
-    AsyncValue<VibeModel?>? vibeList, // 🟢 Fixed: Added here
+    AsyncValue<OnboardingModals?>? onboardingList, // 🟢 Added in copyWith
+    AsyncValue<VibeModel?>? vibeList,
     List<Messages>? messages,
     bool? isSending,
   }) {
@@ -54,7 +58,8 @@ class FeaturesState {
       roleChatInit: roleChatInit ?? this.roleChatInit,
       role: role ?? this.role,
       conversationList: conversationList ?? this.conversationList,
-      vibeList: vibeList ?? this.vibeList, // 🟢 Fixed: Added here
+      onboardingList: onboardingList ?? this.onboardingList, // 🟢 Added in return
+      vibeList: vibeList ?? this.vibeList,
       messages: messages ?? this.messages,
       isSending: isSending ?? this.isSending,
     );

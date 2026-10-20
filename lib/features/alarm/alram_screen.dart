@@ -1747,7 +1747,7 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 🟢 Companion Picker (Filtered by CHARACTER)
+                    // 🟢 Companion Picker
                     CustomText.medium(
                       'Select Companion',
                       fontSize: 14,
@@ -1770,17 +1770,10 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen> {
                               color: AppColors.textSecondaryLight,
                             ),
                             data: (ConversationModel? model) {
-                              final rawConversations = model?.data?.items ?? [];
-
-                              // 🟢 Filter: Only show CHARACTER profiles
-                              final conversations = rawConversations.where((item) {
-                                final type = item.chatType ??  '';
-                                return type.toString().toUpperCase() == 'CHARACTER';
-                              }).toList();
-
+                              final conversations = model?.data?.items ?? [];
                               if (conversations.isEmpty) {
                                 return CustomText.regular(
-                                  'No character companions found',
+                                  'No companions found',
                                   fontSize: 12,
                                   color: AppColors.textSecondaryLight,
                                 );
@@ -1925,22 +1918,19 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen> {
                       borderRadius: 16,
                       onTap: () async {
                         if (selectedDays.isEmpty) {
-                          Utils.showErrorMessage(
-                              context, 'Please select at least one day');
+                          Utils.showErrorMessage(context, 'Please select at least one day');
                           return;
                         }
 
                         if (selectedModelId == null ||
                             selectedModelId!.isEmpty) {
-                          Utils.showErrorMessage(
-                              context, 'Please select a companion');
+                          Utils.showErrorMessage(context, 'Please select a companion');
                           return;
                         }
 
                         final msg = messageController.text.trim();
                         if (msg.isEmpty) {
-                          Utils.showErrorMessage(
-                              context, 'Please enter an alarm message');
+                          Utils.showErrorMessage(context, 'Please enter an alarm message');
                           return;
                         }
 
@@ -1963,18 +1953,14 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen> {
 
                         if (screenContext.mounted) {
                           if (success) {
-                            await ref
-                                .read(alarmProvider.notifier)
-                                .fetchAlarms();
+                            await ref.read(alarmProvider.notifier).fetchAlarms();
                             if (screenContext.mounted) {
-                              Utils.showSuccessMessage(
-                                  screenContext, 'Alarm set successfully!');
+                              Utils.showSuccessMessage(screenContext, 'Alarm set successfully!');
                             }
                           } else {
                             Utils.showErrorMessage(
                               screenContext,
-                              alarmState.error ??
-                                  'Failed to set alarm. Try again.',
+                              alarmState.error ?? 'Failed to set alarm. Try again.',
                             );
                           }
                         }

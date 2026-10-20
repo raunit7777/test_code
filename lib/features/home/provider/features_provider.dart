@@ -105,6 +105,18 @@ class ProfileNotifier extends StateNotifier<FeaturesState> {
     }
   }
 
+
+  Future<void> fetchOnboardingList() async {
+    // Corrected spelling in function name (Onboarding)
+    state = state.copyWith(onboardingList: const AsyncValue.loading());
+    try {
+      final response = await _repository.getOnboardingList();
+      state = state.copyWith(onboardingList: AsyncValue.data(response));
+    } catch (e, stack) {
+      state = state.copyWith(onboardingList: AsyncValue.error(e, stack));
+    }
+  }
+
   // 2️⃣ Fetch Model Details
   Future<void> fetchProfileDetails(dynamic sId) async {
     state = state.copyWith(profileDetails: const AsyncValue.loading());
