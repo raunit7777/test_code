@@ -96,28 +96,13 @@ class AuthRepository {
     return response.data;
   }
   Future<dynamic> refresh(dynamic data) async {
-    print('================ [REFRESH TOKEN STARTED] ================');
-    print('👉 [1] Endpoint URL: ${ApiEndpoints.refreshToken}');
-    print('👉 [2] Payload Data Sent: $data');
-
     try {
-      print('⌛ [3] Sending POST request via ApiClient...');
-
       final response = await _apiClient.post(
         ApiEndpoints.refreshToken,
         data: data,
       );
-
-      print('✅ [4] Response Received Successfully!');
-      print('📊 [5] Status Code: ${response.statusCode}');
-      print('📦 [6] Raw Response Data: ${response.data}');
-      print('================ [REFRESH TOKEN COMPLETED] ================');
-
       return response.data;
     } on DioException catch (e) {
-      print('❌ [ERROR] DioException in refresh(): ${e.response?.statusCode} | ${e.message}');
-
-      // Agar 401/403/400 error aaye, toh map return karo taaki StateNotifier ka 'else' block chal sake
       if (e.response != null) {
         return e.response?.data ?? {
           "success": false,
@@ -125,10 +110,7 @@ class AuthRepository {
         };
       }
       rethrow;
-    } catch (e, stackTrace) {
-      print('❌ [ERROR] Exception caught in refresh(): $e');
-      print('🚨 [TRACE] Stack Trace: $stackTrace');
-      print('================ [REFRESH TOKEN FAILED] ================');
+    } catch (e) {
       rethrow;
     }
   }

@@ -1,3 +1,9 @@
+enum MessageStatus {
+  sending,
+  sent,
+  failed,
+}
+
 class ChatInitModel {
   bool? success;
   Data? data;
@@ -7,17 +13,17 @@ class ChatInitModel {
 
   ChatInitModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
     message = json['message'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['success'] = this.success;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
-    data['message'] = this.message;
+    data['message'] = message;
     return data;
   }
 }
@@ -35,7 +41,7 @@ class Data {
     if (json['messages'] != null) {
       messages = <Messages>[];
       json['messages'].forEach((v) {
-        messages!.add(new Messages.fromJson(v));
+        messages!.add(Messages.fromJson(v));
       });
     }
     total = json['total'];
@@ -43,13 +49,13 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['conversationId'] = this.conversationId;
-    if (this.messages != null) {
-      data['messages'] = this.messages!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['conversationId'] = conversationId;
+    if (messages != null) {
+      data['messages'] = messages!.map((v) => v.toJson()).toList();
     }
-    data['total'] = this.total;
-    data['isNew'] = this.isNew;
+    data['total'] = total;
+    data['isNew'] = isNew;
     return data;
   }
 }
@@ -64,44 +70,60 @@ class Messages {
   String? updatedAt;
   int? iV;
   Metadata? metadata;
+  MessageStatus status;
+  String? clientMessageId;
 
-  Messages(
-      {this.sId,
-        this.conversationId,
-        this.userId,
-        this.role,
-        this.content,
-        this.createdAt,
-        this.updatedAt,
-        this.iV,
-        this.metadata});
+  Messages({
+    this.sId,
+    this.conversationId,
+    this.userId,
+    this.role,
+    this.content,
+    this.createdAt,
+    this.updatedAt,
+    this.iV,
+    this.metadata,
+    this.status = MessageStatus.sent,
+    this.clientMessageId,
+  });
 
-  Messages.fromJson(Map<String, dynamic> json) {
-    sId = json['_id'];
-    conversationId = json['conversationId'];
-    userId = json['userId'];
-    role = json['role'];
-    content = json['content'];
-    createdAt = json['createdAt'];
-    updatedAt = json['updatedAt'];
-    iV = json['__v'];
-    metadata = json['metadata'] != null
-        ? new Metadata.fromJson(json['metadata'])
-        : null;
+  Messages.fromJson(Map<String, dynamic> json)
+      : sId = json['_id'] ?? json['id'],
+        conversationId = json['conversationId'],
+        userId = json['userId'],
+        role = json['role'],
+        content = json['content'],
+        createdAt = json['createdAt'],
+        updatedAt = json['updatedAt'],
+        iV = json['__v'],
+        clientMessageId = json['clientMessageId'],
+        status = _parseStatus(json['status']),
+        metadata = json['metadata'] != null
+            ? Metadata.fromJson(json['metadata'])
+            : null;
+
+  static MessageStatus _parseStatus(dynamic value) {
+    if (value == null) return MessageStatus.sent;
+    final str = value.toString().toLowerCase();
+    if (str == 'sending') return MessageStatus.sending;
+    if (str == 'failed') return MessageStatus.failed;
+    return MessageStatus.sent;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['_id'] = this.sId;
-    data['conversationId'] = this.conversationId;
-    data['userId'] = this.userId;
-    data['role'] = this.role;
-    data['content'] = this.content;
-    data['createdAt'] = this.createdAt;
-    data['updatedAt'] = this.updatedAt;
-    data['__v'] = this.iV;
-    if (this.metadata != null) {
-      data['metadata'] = this.metadata!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['_id'] = sId;
+    data['conversationId'] = conversationId;
+    data['userId'] = userId;
+    data['role'] = role;
+    data['content'] = content;
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
+    data['__v'] = iV;
+    data['status'] = status.name;
+    data['clientMessageId'] = clientMessageId;
+    if (metadata != null) {
+      data['metadata'] = metadata!.toJson();
     }
     return data;
   }
@@ -123,11 +145,11 @@ class Metadata {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['tokens'] = this.tokens;
-    data['provider'] = this.provider;
-    data['model'] = this.model;
-    data['responseTime'] = this.responseTime;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['tokens'] = tokens;
+    data['provider'] = provider;
+    data['model'] = model;
+    data['responseTime'] = responseTime;
     return data;
   }
 }

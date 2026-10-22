@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:infinity_love/features/streak/repo/streak_repo.dart';
@@ -35,12 +36,17 @@ Future<void> init() async {
           },
         ),
       );
-      dio.interceptors.add(
-        LogInterceptor(
-          requestBody: true,
-          responseBody: true,
-        ),
-      );
+      if (kDebugMode) {
+        dio.interceptors.add(
+          LogInterceptor(
+            requestBody: false,
+            responseBody: false,
+            requestHeader: false,
+            responseHeader: false,
+            error: true,
+          ),
+        );
+      }
       return dio;
     });
   }

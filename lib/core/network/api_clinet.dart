@@ -1,449 +1,21 @@
-// import 'package:dio/dio.dart';
-//
-// import '../errors/app_exception.dart';
-//
-// class ApiClient {
-//   final Dio _dio;
-//
-//   ApiClient(this._dio);
-//
-//   Future<Response> get(
-//       String path, {
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.get(
-//         path,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> post(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.post(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> put(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.put(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> delete(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.delete(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Response _handleResponse(Response response) {
-//     final code = response.statusCode;
-//
-//     if (code == null) {
-//       throw AppException('Unknown Error');
-//     }
-//
-//     switch (code) {
-//       case 200:
-//       case 201:
-//       case 202:
-//       case 204:
-//         return response;
-//
-//       case 400:
-//         throw BadRequestException(
-//           response.data?['message'] ?? 'Bad Request',
-//           code,
-//         );
-//
-//       case 401:
-//         throw UnauthorizedException(
-//           response.data?['message'] ?? 'Unauthorized',
-//           code,
-//         );
-//
-//       case 403:
-//         throw ForbiddenException(
-//           response.data?['message'] ?? 'Access Denied',
-//           code,
-//         );
-//
-//       case 404:
-//         throw NotFoundException(
-//           response.data?['message'] ?? 'Data Not Found',
-//           code,
-//         );
-//
-//       case 409:
-//         throw ConflictException(
-//           response.data?['message'] ?? 'Conflict Error',
-//           code,
-//         );
-//
-//       case 422:
-//         throw ValidationException(
-//           response.data?['message'] ?? 'Validation Failed',
-//           code,
-//         );
-//
-//       case 429:
-//         throw AppException('Too Many Requests', code);
-//
-//       case 500:
-//         throw ServerException(
-//           response.data?['message'] ?? 'Internal Server Error',
-//           code,
-//         );
-//
-//       case 502:
-//         throw ServerException('Bad Gateway', code);
-//
-//       case 503:
-//         throw ServerException('Service Unavailable', code);
-//
-//       case 504:
-//         throw ServerException('Gateway Timeout', code);
-//
-//       default:
-//         throw AppException(
-//           response.data?['message'] ?? 'Something Went Wrong',
-//           code,
-//         );
-//     }
-//   }
-//
-//   AppException _handleDioError(DioException e) {
-//     if (e.type == DioExceptionType.connectionTimeout ||
-//         e.type == DioExceptionType.receiveTimeout ||
-//         e.type == DioExceptionType.sendTimeout) {
-//       return NetworkException('Connection Timeout');
-//     } else if (e.type == DioExceptionType.connectionError) {
-//       return NetworkException('No Internet Connection');
-//     }
-//
-//     if (e.response != null) {
-//       try {
-//         return _handleResponseAsException(e.response!);
-//       } catch (err) {
-//         if (err is AppException) return err;
-//         return AppException(err.toString());
-//       }
-//     }
-//     return AppException('Network Error: ${e.message}');
-//   }
-//
-//   AppException _handleResponseAsException(Response response) {
-//     final statusCode = response.statusCode;
-//     final message = response.data?['message'] ?? 'Something went wrong';
-//
-//     if (statusCode == 401) {
-//       return UnauthorizedException(message, statusCode);
-//     } else if (statusCode == 500) {
-//       return ServerException(message, statusCode);
-//     } else {
-//       return AppException(message, statusCode);
-//     }
-//   }
-// }
-
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../features/auth/reposiotory/auth_repo.dart';
 import '../../routes/app_routes.dart';
 import '../di/service_locator.dart';
 import '../errors/app_exception.dart';
 import '../storage/loacal_storage.dart';
-import 'api_endpoints.dart';
-
-import 'package:go_router/go_router.dart';
-
-
-// class ApiClient {
-//   final Dio _dio;
-//
-//   ApiClient(this._dio) {
-//     // 🔒 Automatically attach Bearer token to all requests via Interceptor
-//     _dio.interceptors.add(
-//       InterceptorsWrapper(
-//         onRequest: (options, handler) {
-//           final token = LocalStorage.getToken();
-//           if (token != null && token.isNotEmpty) {
-//             options.headers['Authorization'] = 'Bearer $token';
-//           }
-//           options.headers['Content-Type'] = 'application/json';
-//           options.headers['Accept'] = 'application/json';
-//           return handler.next(options);
-//         },
-//         onError: (DioException e, handler) {
-//           // Token expire / 401 Unauthorized par LocalStorage clear kar do
-//           if (e.response?.statusCode == 401) {
-//             LocalStorage.clear();
-//           }
-//           return handler.next(e);
-//         },
-//       ),
-//     );
-//   }
-//
-//   Future<Response> get(
-//       String path, {
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.get(
-//         path,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> post(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.post(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> put(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.put(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Future<Response> delete(
-//       String path, {
-//         dynamic data,
-//         Map<String, dynamic>? queryParameters,
-//         Options? options,
-//         CancelToken? cancelToken,
-//       }) async {
-//     try {
-//       final response = await _dio.delete(
-//         path,
-//         data: data,
-//         queryParameters: queryParameters,
-//         options: options,
-//         cancelToken: cancelToken,
-//       );
-//       return _handleResponse(response);
-//     } on DioException catch (e) {
-//       throw _handleDioError(e);
-//     }
-//   }
-//
-//   Response _handleResponse(Response response) {
-//     final code = response.statusCode;
-//
-//     if (code == null) {
-//       throw AppException('Unknown Error');
-//     }
-//
-//     switch (code) {
-//       case 200:
-//       case 201:
-//       case 202:
-//       case 204:
-//         return response;
-//
-//       case 400:
-//         throw BadRequestException(
-//           response.data?['message'] ?? 'Bad Request',
-//           code,
-//         );
-//
-//       case 401:
-//         throw UnauthorizedException(
-//           response.data?['message'] ?? 'Unauthorized',
-//           code,
-//         );
-//
-//       case 403:
-//         throw ForbiddenException(
-//           response.data?['message'] ?? 'Access Denied',
-//           code,
-//         );
-//
-//       case 404:
-//         throw NotFoundException(
-//           response.data?['message'] ?? 'Data Not Found',
-//           code,
-//         );
-//
-//       case 409:
-//         throw ConflictException(
-//           response.data?['message'] ?? 'Conflict Error',
-//           code,
-//         );
-//
-//       case 422:
-//         throw ValidationException(
-//           response.data?['message'] ?? 'Validation Failed',
-//           code,
-//         );
-//
-//       case 429:
-//         throw AppException('Too Many Requests', code);
-//
-//       case 500:
-//         throw ServerException(
-//           response.data?['message'] ?? 'Internal Server Error',
-//           code,
-//         );
-//
-//       case 502:
-//         throw ServerException('Bad Gateway', code);
-//
-//       case 503:
-//         throw ServerException('Service Unavailable', code);
-//
-//       case 504:
-//         throw ServerException('Gateway Timeout', code);
-//
-//       default:
-//         throw AppException(
-//           response.data?['message'] ?? 'Something Went Wrong',
-//           code,
-//         );
-//     }
-//   }
-//
-//   AppException _handleDioError(DioException e) {
-//     if (e.type == DioExceptionType.connectionTimeout ||
-//         e.type == DioExceptionType.receiveTimeout ||
-//         e.type == DioExceptionType.sendTimeout) {
-//       return NetworkException('Connection Timeout');
-//     } else if (e.type == DioExceptionType.connectionError) {
-//       return NetworkException('No Internet Connection');
-//     }
-//
-//     if (e.response != null) {
-//       try {
-//         return _handleResponseAsException(e.response!);
-//       } catch (err) {
-//         if (err is AppException) return err;
-//         return AppException(err.toString());
-//       }
-//     }
-//     return AppException('Network Error: ${e.message}');
-//   }
-//
-//   AppException _handleResponseAsException(Response response) {
-//     final statusCode = response.statusCode;
-//     final message = response.data?['message'] ?? 'Something went wrong';
-//
-//     if (statusCode == 401) {
-//       return UnauthorizedException(message, statusCode);
-//     } else if (statusCode == 500) {
-//       return ServerException(message, statusCode);
-//     } else {
-//       return AppException(message, statusCode);
-//     }
-//   }
-// }
-
-
-
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:go_router/go_router.dart';
-
-// Import your custom exceptions and local storage / Service Locator references
-// import '../../core/di/service_locator.dart';
-// import '../../core/network/app_exception.dart';
-// import '../../core/storage/local_storage.dart';
-// import '../../routes/app_routes.dart'; // rootNavigatorKey
 
 class ApiClient {
   final Dio _dio;
+
+  // Active CancelTokens to support cancellation of all in-flight requests on logout
+  final Set<CancelToken> _activeCancelTokens = {};
+
+  // Global callback for complete logout (to reset Riverpod providers, etc.)
+  static Future<void> Function(String reason)? onForceLogout;
 
   ApiClient(this._dio) {
     _dio.interceptors.add(
@@ -452,9 +24,6 @@ class ApiClient {
           final token = LocalStorage.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
-            debugPrint("🔑 [ApiClient] Attached Bearer Access Token to Header");
-          } else {
-            debugPrint("⚠️ [ApiClient] No Access Token found in LocalStorage");
           }
 
           options.headers['Content-Type'] = 'application/json';
@@ -462,64 +31,104 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          debugPrint("🔴 [ApiClient Error] Status Code: ${e.response?.statusCode}");
-          debugPrint("🔴 [ApiClient Error Path]: ${e.requestOptions.path}");
+          if (kDebugMode) {
+            debugPrint("🔴 [ApiClient Error] Status Code: ${e.response?.statusCode} | Path: ${e.requestOptions.path}");
+          }
 
-          // 🟢 401 Unauthorized Handling
+          // 🟢 401 Unauthorized Handling & Token Refresh
           if (e.response?.statusCode == 401) {
             final path = e.requestOptions.path.toLowerCase();
 
-            // Refresh, Login, ya Verify OTP khud 401 de to loop roko aur Logout kar do
+            // Do not attempt refresh on auth endpoints themselves
             if (path.contains('refresh') || path.contains('login') || path.contains('verify-otp')) {
-              debugPrint("⛔ [401 Interceptor] Auth/Refresh endpoint failed. Navigating to Login...");
-              await _logoutAndNavigateToLogin();
+              if (kDebugMode) {
+                debugPrint("⛔ [401 Interceptor] Auth endpoint returned 401. Triggering session reset...");
+              }
+              await handleCompleteLogout('Authentication failed.');
+              return handler.next(e);
+            }
+
+            final String? refreshToken = LocalStorage.getRefreshToken();
+            if (refreshToken == null || refreshToken.isEmpty) {
+              if (kDebugMode) {
+                debugPrint("❌ [401 Interceptor] No Refresh Token available. Triggering Logout...");
+              }
+              await handleCompleteLogout('Session expired. Please log in again.');
               return handler.next(e);
             }
 
             try {
-              final String? refreshToken = LocalStorage.getRefreshToken();
-              debugPrint("🔄 [401 Interceptor] Retrying with Refresh Token: $refreshToken");
+              if (kDebugMode) {
+                debugPrint("🔄 [401 Interceptor] Attempting token refresh...");
+              }
 
-              if (refreshToken != null && refreshToken.isNotEmpty) {
-                final responseData = await sl<AuthRepository>().refresh({
-                  "refreshToken": refreshToken,
-                });
+              final responseData = await sl<AuthRepository>().refresh({
+                "refreshToken": refreshToken,
+              });
 
-                debugPrint("📦 [Refresh API Raw Response]: $responseData");
+              final bool isSuccess = responseData != null &&
+                  (responseData['success'] == true || responseData['status'].toString() == "1");
 
-                final bool isSuccess = responseData['success'] == true ||
-                    responseData['status'].toString() == "1";
+              if (isSuccess && responseData['data'] != null) {
+                final data = responseData['data'];
+                final newAccessToken = data['accessToken']?.toString() ?? '';
+                final newRefreshToken = data['refreshToken']?.toString() ?? refreshToken;
+                final userId = data['user']?['id']?.toString() ?? data['userId']?.toString();
 
-                if (isSuccess) {
-                  final data = responseData['data'];
-                  final newAccessToken = data['accessToken']?.toString() ?? '';
-                  final newRefreshToken = data['refreshToken']?.toString() ?? refreshToken;
-                  final userId = data['user']?['id']?.toString();
-
-                  debugPrint("✅ [Refresh Success] Saving New Access Token: $newAccessToken");
-
+                if (newAccessToken.isNotEmpty) {
                   await LocalStorage.saveAuthData(
                     token: newAccessToken,
                     refreshToken: newRefreshToken,
                     userId: userId,
                   );
 
-                  e.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-                  debugPrint("🔁 [401 Interceptor] Retrying original API: ${e.requestOptions.path}");
+                  if (kDebugMode) {
+                    debugPrint("✅ [Refresh Success] Tokens refreshed successfully. Retrying original request...");
+                  }
 
+                  e.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
                   final clonedRequest = await _dio.fetch(e.requestOptions);
                   return handler.resolve(clonedRequest);
-                } else {
-                  debugPrint("❌ [Refresh Failed] Backend returned success = false");
-                  await _logoutAndNavigateToLogin();
                 }
-              } else {
-                debugPrint("❌ [Refresh Failed] No Refresh Token found in Local Storage");
-                await _logoutAndNavigateToLogin();
               }
+
+              // Backend explicitly rejected refresh
+              if (kDebugMode) {
+                debugPrint("❌ [Refresh Failed] Backend rejected refresh token.");
+              }
+              await handleCompleteLogout('Session expired. Please log in again.');
+              return handler.next(e);
             } catch (err) {
-              debugPrint("💥 [Refresh Exception]: $err");
-              await _logoutAndNavigateToLogin();
+              // Differentiate refresh errors:
+              // Only trigger logout on explicit 401 / token revoked / invalid token.
+              // For timeouts, socket exceptions, or 500 errors, preserve session and return a recoverable error.
+              bool isDefinitiveAuthFailure = false;
+
+              if (err is DioException) {
+                final statusCode = err.response?.statusCode;
+                final responseBody = err.response?.data?.toString().toLowerCase() ?? '';
+
+                if (statusCode == 401 ||
+                    statusCode == 403 ||
+                    responseBody.contains('invalid token') ||
+                    responseBody.contains('token revoked') ||
+                    responseBody.contains('token expired') ||
+                    responseBody.contains('unauthorized')) {
+                  isDefinitiveAuthFailure = true;
+                }
+              }
+
+              if (isDefinitiveAuthFailure) {
+                if (kDebugMode) {
+                  debugPrint("⛔ [Refresh Error] Refresh token is revoked or expired. Logging out...");
+                }
+                await handleCompleteLogout('Session expired. Please log in again.');
+              } else {
+                if (kDebugMode) {
+                  debugPrint("⚠️ [Refresh Error] Recoverable network/server error during refresh: $err. Preserving session.");
+                }
+              }
+
               return handler.next(e);
             }
           }
@@ -530,115 +139,161 @@ class ApiClient {
     );
   }
 
-  Future<void> _logoutAndNavigateToLogin() async {
+  /// Cancels all ongoing Dio network requests
+  void cancelAllRequests({String reason = 'Session terminated'}) {
+    for (final token in _activeCancelTokens) {
+      if (!token.isCancelled) {
+        token.cancel(reason);
+      }
+    }
+    _activeCancelTokens.clear();
+  }
+
+  /// Complete logout reset: cancels pending requests, purges secure storage,
+  /// invokes application-level provider reset, and safely routes to login.
+  Future<void> handleCompleteLogout(String reason) async {
+    cancelAllRequests(reason: reason);
     await LocalStorage.clear();
-    final context = rootNavigatorKey.currentContext;
-    if (context != null && context.mounted) {
-      context.goNamed('login');
+
+    if (onForceLogout != null) {
+      try {
+        await onForceLogout!(reason);
+      } catch (e) {
+        debugPrint('⚠️ Error in onForceLogout callback: $e');
+      }
+    } else {
+      final context = rootNavigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        context.goNamed('login');
+      }
     }
   }
 
+  CancelToken _registerCancelToken(CancelToken? providedToken) {
+    final token = providedToken ?? CancelToken();
+    _activeCancelTokens.add(token);
+    return token;
+  }
+
+  void _unregisterCancelToken(CancelToken token) {
+    _activeCancelTokens.remove(token);
+  }
+
   Future<Response> get(
-      String path, {
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    final effectiveToken = _registerCancelToken(cancelToken);
     try {
       final response = await _dio.get(
         path,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: effectiveToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } finally {
+      _unregisterCancelToken(effectiveToken);
     }
   }
 
   Future<Response> post(
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    final effectiveToken = _registerCancelToken(cancelToken);
     try {
       final response = await _dio.post(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: effectiveToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } finally {
+      _unregisterCancelToken(effectiveToken);
     }
   }
 
   Future<Response> put(
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    final effectiveToken = _registerCancelToken(cancelToken);
     try {
       final response = await _dio.put(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: effectiveToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } finally {
+      _unregisterCancelToken(effectiveToken);
     }
   }
 
-  // 🟢 ADDED: PATCH Method
   Future<Response> patch(
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    final effectiveToken = _registerCancelToken(cancelToken);
     try {
       final response = await _dio.patch(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: effectiveToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } finally {
+      _unregisterCancelToken(effectiveToken);
     }
   }
 
   Future<Response> delete(
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    final effectiveToken = _registerCancelToken(cancelToken);
     try {
       final response = await _dio.delete(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: effectiveToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } finally {
+      _unregisterCancelToken(effectiveToken);
     }
   }
 

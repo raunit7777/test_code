@@ -12,6 +12,8 @@ StateNotifierProvider<ProfileNotifier, CustomizationState>((ref) {
   return ProfileNotifier(sl<CustomizeRepository>());
 });
 
+final customizationProvider = CustomizProvider;
+
 class ProfileNotifier extends StateNotifier<CustomizationState> {
   final CustomizeRepository _repository;
 

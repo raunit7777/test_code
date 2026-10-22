@@ -1,3 +1,5 @@
+import 'chat_init_model.dart';
+
 class ChatInitRoleModel {
   bool? success;
   RoleChatData? data;
@@ -70,6 +72,8 @@ class RoleChatMessage {
   String? role;
   String? content;
   String? createdAt;
+  MessageStatus status;
+  String? clientMessageId;
 
   RoleChatMessage({
     this.sId,
@@ -78,15 +82,26 @@ class RoleChatMessage {
     this.role,
     this.content,
     this.createdAt,
+    this.status = MessageStatus.sent,
+    this.clientMessageId,
   });
 
-  RoleChatMessage.fromJson(Map<String, dynamic> json) {
-    sId = json['_id'] ?? json['id'];
-    conversationId = json['conversationId'];
-    userId = json['userId'];
-    role = json['role'];
-    content = json['content'];
-    createdAt = json['createdAt'];
+  RoleChatMessage.fromJson(Map<String, dynamic> json)
+      : sId = json['_id'] ?? json['id'],
+        conversationId = json['conversationId'],
+        userId = json['userId'],
+        role = json['role'],
+        content = json['content'],
+        createdAt = json['createdAt'],
+        clientMessageId = json['clientMessageId'],
+        status = _parseStatus(json['status']);
+
+  static MessageStatus _parseStatus(dynamic value) {
+    if (value == null) return MessageStatus.sent;
+    final str = value.toString().toLowerCase();
+    if (str == 'sending') return MessageStatus.sending;
+    if (str == 'failed') return MessageStatus.failed;
+    return MessageStatus.sent;
   }
 
   Map<String, dynamic> toJson() {
@@ -97,6 +112,8 @@ class RoleChatMessage {
     map['role'] = role;
     map['content'] = content;
     map['createdAt'] = createdAt;
+    map['status'] = status.name;
+    map['clientMessageId'] = clientMessageId;
     return map;
   }
 }

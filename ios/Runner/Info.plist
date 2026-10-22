@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Infinity Love requires camera access to capture profile photos and customize AI partner avatars.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Infinity Love requires photo library access to select pictures for your profile and customized AI partner avatars.</string>
 </dict>
 </plist>

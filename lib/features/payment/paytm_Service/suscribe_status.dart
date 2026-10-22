@@ -1,87 +1,32 @@
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../../describe_image/model/subcription_model.dart';
-// import '../model/avilable_model.dart';
-//
-// enum SubscribeStatus {
-//   idle,
-//   initiating,
-//   launchingPaytm,
-//   success,
-//   failure,
-// }
-//
-// class SubscribeState {
-//   final AsyncValue<SubcriptionModel?> subcriptionList;
-//   final SubscribeStatus status;
-//   final String? errorMessage;
-//
-//   const SubscribeState({
-//     this.subcriptionList = const AsyncValue.data(null),
-//     this.status = SubscribeStatus.idle,
-//     this.errorMessage,
-//   });
-//
-//   bool get isBusy =>
-//       status == SubscribeStatus.initiating || status == SubscribeStatus.launchingPaytm;
-//
-//   SubscribeState copyWith({
-//     AsyncValue<SubcriptionModel?>? subcriptionList,
-//     AsyncValue<AvailablePaymentModel?>? paymentAvailableList,
-//     SubscribeStatus? status,
-//     String? errorMessage,
-//   }) {
-//     return SubscribeState(
-//       subcriptionList: subcriptionList ?? this.subcriptionList,
-//       status: status ?? this.status,
-//       errorMessage: errorMessage,
-//     );
-//   }
-// }
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../describe_image/model/subcription_model.dart';
-import '../model/avilable_model.dart';
-
-enum SubscribeStatus {
-  idle,
-  loading,        // 🔥 Added loading
-  initiating,
-  launchingPaytm,
-  success,
+/// Explicit payment states according to mobile security and payment state machine standards
+enum PaymentState {
+  initial,
+  initiated,
+  verifying,
+  paid,
   pending,
-  failure,
+  failed,
+  expired;
+
+  bool get isBusy => this == PaymentState.initiated || this == PaymentState.verifying;
+  bool get isPaid => this == PaymentState.paid;
+  bool get isPending => this == PaymentState.pending;
+  bool get isFailed => this == PaymentState.failed;
+  bool get isExpired => this == PaymentState.expired;
 }
 
-class SubscribeState {
-  final AsyncValue<SubcriptionModel?> subcriptionList;
-  final AsyncValue<AvailablePaymentModel?> paymentAvailableList;
-  final SubscribeStatus status;
-  final String? errorMessage;
-
-  const SubscribeState({
-    this.subcriptionList = const AsyncValue.data(null),
-    this.paymentAvailableList = const AsyncValue.data(null),
-    this.status = SubscribeStatus.idle,
-    this.errorMessage,
-  });
-
-  bool get isBusy =>
-      status == SubscribeStatus.loading ||
-          status == SubscribeStatus.initiating ||
-          status == SubscribeStatus.launchingPaytm ||
-          status == SubscribeStatus.pending;
-
-  SubscribeState copyWith({
-    AsyncValue<SubcriptionModel?>? subcriptionList,
-    AsyncValue<AvailablePaymentModel?>? paymentAvailableList,
-    SubscribeStatus? status,
-    String? errorMessage,
-  }) {
-    return SubscribeState(
-      subcriptionList: subcriptionList ?? this.subcriptionList,
-      paymentAvailableList: paymentAvailableList ?? this.paymentAvailableList,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
+/// Backwards-compatible SubscribeStatus
+enum SubscribeStatus {
+  initial,
+  idle,
+  loading,
+  initiating,
+  launchingPaytm,
+  verifying,
+  success,
+  paid,
+  pending,
+  failed,
+  failure,
+  expired,
 }

@@ -1,161 +1,55 @@
-// import 'package:flutter/cupertino.dart';
-// import 'package:infinity_love/routes/routes_name.dart';
-//
-// import '../../../core/network/api_clinet.dart';
-// import '../../../core/network/api_endpoints.dart';
-// import '../../describe_image/model/subcription_model.dart';
-// import '../model/paytm_init_request_model.dart';
-// import 'package:go_router/go_router.dart';
-// import '../../../routes/app_routes.dart';
-//
-// class SubscriptionRepository2 {
-//   final ApiClient _apiClient;
-//
-//   SubscriptionRepository2(this._apiClient);
-//
-//   Future<SubcriptionModel> getSubcription() async {
-//     final response = await _apiClient.get(
-//       ApiEndpoints.subscriptionPlan,
-//     );
-//     return SubcriptionModel.fromJson(response.data);
-//   }
-//
-//   Future<PaytmInitData> subscribe(PaytmInitRequestModel request) async {
-//     final response = await _apiClient.post(
-//       ApiEndpoints.paymentInit,
-//       data: request.toJson(),
-//     );
-//
-//     final parsedResponse = PaytmInitResponseModel.fromJson(response.data);
-//     return parsedResponse.data ??
-//         PaytmInitData.fromJson(response.data['data'] ?? {});
-//   }
-//
-//   // 🟢 Payment Verification API Method
-//   Future<bool> verifyPayment(String orderId) async {
-//     final String fullUrl = '${ApiEndpoints.paymentVerify}/$orderId';
-//     debugPrint('🚀 [Verify Payment] Calling URL: $fullUrl');
-//     debugPrint('📦 [Verify Payment] Order ID: $orderId');
-//
-//     try {
-//       final response = await _apiClient.get(fullUrl);
-//
-//       final int statusCode = response.statusCode ?? 0;
-//       debugPrint('📥 [Verify Payment] Status Code: $statusCode');
-//       debugPrint('📦 [Verify Payment] Raw Response Data: ${response.data}');
-//
-//       if (statusCode == 200 &&
-//           response.data != null &&
-//           response.data['success'] == true) {
-//         debugPrint('✅ [Verify Payment] Verification SUCCESS for Order ID: $orderId');
-//
-//         // 🟢 Frame complete hone ke baad Navigation execute karein
-//         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           final BuildContext? globalContext = rootNavigatorKey.currentContext;
-//
-//           if (globalContext != null && globalContext.mounted) {
-//             debugPrint('🔀 Resetting stack and going to Main Navigation Screen...');
-//
-//             // GoRouter stack reset
-//             globalContext.goNamed('mainNav');
-//           } else {
-//             debugPrint('⚠️ Global context unmounted or null!');
-//           }
-//         });
-//
-//         return true;
-//       } else {
-//         debugPrint('⚠️ [Verify Payment] Verification FAILED or success is false');
-//         return false;
-//       }
-//     } catch (error, stackTrace) {
-//       debugPrint('❌ [Verify Payment Error]: $error');
-//       debugPrint('🚨 [Verify Payment StackTrace]: $stackTrace');
-//       return false;
-//     }
-//   }}
-
-
-// import 'package:flutter/cupertino.dart';
-// import '../../../core/network/api_clinet.dart';
-// import '../../../core/network/api_endpoints.dart';
-// import '../../describe_image/model/subcription_model.dart';
-// import '../model/avilable_model.dart';
-// import '../model/paytm_init_request_model.dart';
-//
-// class SubscriptionRepository2 {
-//   final ApiClient _apiClient;
-//
-//   SubscriptionRepository2(this._apiClient);
-//
-//   Future<SubcriptionModel> getSubcription() async {
-//     final response = await _apiClient.get(
-//       ApiEndpoints.subscriptionPlan,
-//     );
-//     return SubcriptionModel.fromJson(response.data);
-//   }
-//   Future<AvailablePaymentModel> availablePayment() async {
-//     final response = await _apiClient.get(
-//       ApiEndpoints.availablePayment,
-//  // 🟢 Pass request data in query parameters
-//     );
-//
-//     // 🟢 Handles both root-level response and nested response.data safely
-//     if (response.data is Map<String, dynamic>) {
-//       final Map<String, dynamic> data = response.data['data'] != null && response.data['data'] is Map<String, dynamic>
-//           ? response.data['data'] as Map<String, dynamic>
-//           : response.data as Map<String, dynamic>;
-//
-//       return AvailablePaymentModel.fromJson(data);
-//     }
-//
-//     throw Exception('Failed to parse available payment data');
-//   }
-//   Future<PaytmInitData> subscribe(PaytmInitRequestModel request) async {
-//     final response = await _apiClient.post(
-//       ApiEndpoints.paymentInit,
-//       data: request.toJson(),
-//     );
-//
-//     final parsedResponse = PaytmInitResponseModel.fromJson(response.data);
-//     return parsedResponse.data ??
-//         PaytmInitData.fromJson(response.data['data'] ?? {});
-//   }
-//
-//   // 🟢 Pure Backend Payment Verification (No Side Effects)
-//   Future<bool> verifyPayment(String orderId) async {
-//     final String fullUrl = '${ApiEndpoints.paymentVerify}/$orderId';
-//     debugPrint('🚀 [Verify Payment] Calling URL: $fullUrl');
-//
-//     try {
-//       final response = await _apiClient.get(fullUrl);
-//       final int statusCode = response.statusCode ?? 0;
-//
-//       debugPrint('📥 [Verify Payment] Status Code: $statusCode');
-//       debugPrint('📦 [Verify Payment] Raw Data: ${response.data}');
-//
-//       if (statusCode == 200 &&
-//           response.data != null &&
-//           response.data['success'] == true) {
-//         debugPrint('✅ [Verify Payment] SUCCESS for Order ID: $orderId');
-//         return true;
-//       } else {
-//         debugPrint('⚠️ [Verify Payment] FAILED or success is false');
-//         return false;
-//       }
-//     } catch (error, stackTrace) {
-//       debugPrint('❌ [Verify Payment Error]: $error');
-//       return false;
-//     }
-//   }
-// }
-
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/network/api_clinet.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../describe_image/model/subcription_model.dart';
 import '../model/avilable_model.dart';
 import '../model/paytm_init_request_model.dart';
+
+class PaymentVerificationResult {
+  final bool isPaid;
+  final bool isPending;
+  final bool isFailed;
+  final bool isExpired;
+  final String? message;
+  final dynamic rawData;
+
+  const PaymentVerificationResult({
+    required this.isPaid,
+    this.isPending = false,
+    this.isFailed = false,
+    this.isExpired = false,
+    this.message,
+    this.rawData,
+  });
+
+  factory PaymentVerificationResult.inconclusive({String? message}) =>
+      PaymentVerificationResult(
+        isPaid: false,
+        isPending: true,
+        message: message ?? 'Payment verification is still pending.',
+      );
+
+  factory PaymentVerificationResult.paid({dynamic rawData}) =>
+      PaymentVerificationResult(
+        isPaid: true,
+        rawData: rawData,
+        message: 'Payment verified successfully.',
+      );
+
+  factory PaymentVerificationResult.failed({String? message}) =>
+      PaymentVerificationResult(
+        isPaid: false,
+        isFailed: true,
+        message: message ?? 'Payment failed or was cancelled.',
+      );
+
+  factory PaymentVerificationResult.expired({String? message}) =>
+      PaymentVerificationResult(
+        isPaid: false,
+        isExpired: true,
+        message: message ?? 'Payment session expired.',
+      );
+}
 
 class SubscriptionRepository2 {
   final ApiClient _apiClient;
@@ -170,7 +64,7 @@ class SubscriptionRepository2 {
     return SubcriptionModel.fromJson(response.data);
   }
 
-  // 🟢 Available Payment Gateways Fetch (Fixed Parsing Logic)
+  // 🟢 Available Payment Gateways Fetch
   Future<AvailablePaymentModel> getAvailablePayment() async {
     final response = await _apiClient.get(
       ApiEndpoints.availablePayment,
@@ -185,7 +79,7 @@ class SubscriptionRepository2 {
     throw Exception('Failed to parse available payment data');
   }
 
-  // 🟢 Payment Initiate (Supports Dynamic Gateway Payload)
+  // 🟢 Payment Initiate
   Future<PaytmInitData> subscribe(PaytmInitRequestModel request) async {
     final response = await _apiClient.post(
       ApiEndpoints.paymentInit,
@@ -197,30 +91,65 @@ class SubscriptionRepository2 {
         PaytmInitData.fromJson(response.data['data'] ?? {});
   }
 
-  // 🟢 Pure Backend Payment Verification
-  Future<bool> verifyPayment(String orderId) async {
+  // 🟢 Comprehensive Backend Order Status Verification
+  Future<PaymentVerificationResult> checkOrderStatus(String orderId) async {
     final String fullUrl = '${ApiEndpoints.paymentVerify}/$orderId';
-    debugPrint('🚀 [Verify Payment] Calling URL: $fullUrl');
+    if (kDebugMode) {
+      debugPrint('🚀 [Verify Payment] Calling verification URL for Order ID: $orderId');
+    }
 
     try {
       final response = await _apiClient.get(fullUrl);
       final int statusCode = response.statusCode ?? 0;
+      final dynamic body = response.data;
 
-      debugPrint('📥 [Verify Payment] Status Code: $statusCode');
-      debugPrint('📦 [Verify Payment] Raw Data: ${response.data}');
-
-      if (statusCode == 200 &&
-          response.data != null &&
-          response.data['success'] == true) {
-        debugPrint('✅ [Verify Payment] SUCCESS for Order ID: $orderId');
-        return true;
-      } else {
-        debugPrint('⚠️ [Verify Payment] FAILED or success is false');
-        return false;
+      if (kDebugMode) {
+        debugPrint('📥 [Verify Payment] Response Code: $statusCode');
       }
-    } catch (error, stackTrace) {
-      debugPrint('❌ [Verify Payment Error]: $error');
-      return false;
+
+      if (statusCode == 200 && body is Map<String, dynamic>) {
+        final bool success = body['success'] == true;
+        final String statusStr = (body['data']?['status'] ??
+                body['status'] ??
+                body['paymentStatus'] ??
+                '')
+            .toString()
+            .toUpperCase();
+
+        if (success && (statusStr == 'PAID' || statusStr == 'SUCCESS' || statusStr.isEmpty)) {
+          return PaymentVerificationResult.paid(rawData: body);
+        } else if (statusStr == 'PENDING' || statusStr == 'TXN_PENDING') {
+          return PaymentVerificationResult.inconclusive(
+            message: body['message']?.toString() ?? 'Waiting for bank confirmation.',
+          );
+        } else if (statusStr == 'EXPIRED') {
+          return PaymentVerificationResult.expired(
+            message: body['message']?.toString() ?? 'Payment expired.',
+          );
+        } else if (!success && (statusStr == 'FAILED' || statusStr == 'CANCELLED')) {
+          return PaymentVerificationResult.failed(
+            message: body['message']?.toString() ?? 'Payment failed.',
+          );
+        } else if (success) {
+          return PaymentVerificationResult.paid(rawData: body);
+        }
+      }
+
+      // If inconclusive response
+      return PaymentVerificationResult.inconclusive();
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [Verify Payment] Network or timeout error during verification: $error');
+      }
+      return PaymentVerificationResult.inconclusive(
+        message: 'Network issue verifying payment. Status will be checked on resume.',
+      );
     }
+  }
+
+  // 🟢 Pure Backend Payment Verification (boolean convenience)
+  Future<bool> verifyPayment(String orderId) async {
+    final result = await checkOrderStatus(orderId);
+    return result.isPaid;
   }
 }

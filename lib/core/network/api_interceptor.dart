@@ -1,21 +1,28 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../storage/loacal_storage.dart';
 import '../utils/app_logger.dart';
-
 
 class ApiInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final userId = LocalStorage.getUserId();
-    if (userId != null) {
+    if (userId != null && userId.isNotEmpty) {
       options.headers['user-id'] = userId;
     }
 
-    AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}');
-    AppLogger.debug('Headers: ${options.headers}');
-    if (options.data != null) {
-      AppLogger.debug('Body: ${options.data}');
+    if (kDebugMode) {
+      AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}');
+      // Redact sensitive headers before logging
+      final sanitizedHeaders = Map<String, dynamic>.from(options.headers);
+      if (sanitizedHeaders.containsKey('Authorization')) {
+        sanitizedHeaders['Authorization'] = 'Bearer [REDACTED]';
+      }
+      if (sanitizedHeaders.containsKey('refreshToken')) {
+        sanitizedHeaders['refreshToken'] = '[REDACTED]';
+      }
+      AppLogger.debug('Headers: $sanitizedHeaders');
     }
 
     return super.onRequest(options, handler);
@@ -23,14 +30,19 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    AppLogger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+    if (kDebugMode) {
+      AppLogger.debug(
+          'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+    }
     return super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    AppLogger.error('ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
-    AppLogger.error('Message: ${err.message}');
+    if (kDebugMode) {
+      AppLogger.error(
+          'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
+    }
     return super.onError(err, handler);
   }
 }
